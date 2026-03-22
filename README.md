@@ -1,0 +1,70 @@
+# Zephyr MIDI1 Module
+
+A standalone Zephyr RTOS module providing MIDI 1.0 drivers and protocol helpers.
+
+**Author:** Jan-Willem Smaal <usenet@gispen.org>  
+**Copyright:** (c) Jan-Willem Smaal <usenet@gispen.org>  
+**License:** Apache-2.0
+
+## Features
+
+- **MIDI Serial UART Driver**: Supports MIDI 1.0 over UART with "Running Status" support (transmit and receive) and thread-safe mutex protection for multi-threaded applications.
+- **MIDI Clock Generator**: Hardware-based MIDI clock (24 PPQN) generation.
+- **MIDI Clock Measurement**: Measures BPM of incoming clock pulses with block averaging.
+- **Universal MIDI Packet (UMP)**: Helpers for generating MIDI 1.0 UMP packets.
+
+## Integration via West
+
+To use this module in your Zephyr project, add it to your `west.yml` manifest:
+
+```yaml
+manifest:
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: main
+      import: true
+
+    - name: zephyr-midi1
+      url: https://github.com/jw-smaal/zephyr-midi1
+      revision: main
+      path: modules/lib/midi1
+```
+
+Then run:
+```bash
+west update
+```
+
+## Configuration
+
+Enable the desired drivers in your project's `prj.conf`:
+
+```kconfig
+# Enable MIDI Serial UART Driver
+CONFIG_MIDI1_SERIAL=y
+
+# Enable MIDI Clock Generator
+CONFIG_MIDI1_CLOCK_CNTR=y
+
+# Enable MIDI Clock Measurement
+CONFIG_MIDI1_CLOCK_MEAS_CNTR=y
+```
+
+## Devicetree Usage
+
+Example for defining a MIDI serial instance in your Devicetree overlay:
+
+```dts
+/ {
+    midi_serial_0: midi1-serial-0 {
+        compatible = "midi1-serial";
+        uart = <&uart1>;
+        status = "okay";
+    };
+};
+```
+
+## License
+
+Distributed under the Apache License, Version 2.0. See the source files for details.
