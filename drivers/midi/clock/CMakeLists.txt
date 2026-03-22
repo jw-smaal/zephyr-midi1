@@ -1,0 +1,3 @@
+zephyr_library()
+zephyr_library_sources(midi1_clock_cntr.c)
+zephyr_library_link_libraries(midi1_common)

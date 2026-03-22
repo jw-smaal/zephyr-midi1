@@ -1,0 +1,3 @@
+osource "drivers/midi/serial/Kconfig"
+osource "drivers/midi/clock/Kconfig"
+osource "drivers/midi/measurement/Kconfig"

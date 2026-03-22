@@ -1,0 +1,20 @@
+config MIDI1_SERIAL
+    bool "MIDI1 serial UART driver"
+    default y
+
+config MIDI1_SERIAL_CHANNEL
+    int "MIDI channel to use (1-16)"
+    default 1
+    range 1 16
+
+config MIDI1_SERIAL_RUNNING_STATUS_REPEAT
+    int "MIDI1 Serial Running status"
+    default 16
+
+config MIDI1_SERIAL_RUNNING_STATUS_TIMEOUT_MS
+    int "MIDI1 serial Running status timeout (ms)"
+    default 300
+
+config MIDI1_SERIAL_ISR_MSGQ_SIZE_MS
+    int "MIDI1 serial size of the MIDI serial UART rx message queue"
+    default 128
