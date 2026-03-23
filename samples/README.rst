@@ -3,6 +3,10 @@
 MIDI 1.0 Samples
 ################
 
+:Author: Jan-Willem Smaal <usenet@gispen.org>
+:Copyright: (c) Jan-Willem Smaal <usenet@gispen.org>
+:License: Apache-2.0
+
 This directory contains sample applications demonstrating the use of the Zephyr MIDI 1.0 module.
 
 Available Samples
