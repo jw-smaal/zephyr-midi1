@@ -32,7 +32,7 @@
 #include <zephyr/kernel.h>
 
 /* MIDI1.0 definitions by Jan-Willem Smaal */
-#include "midi1.h"
+#include <zephyr/drivers/midi/midi1.h>
 
 /*
  * This 'MSQ_SIZE' constant is something you will want to tune.

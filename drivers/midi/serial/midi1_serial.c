@@ -22,8 +22,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/ring_buffer.h>
 
-#include "midi1.h"
-#include "midi1_serial.h"
+#include <zephyr/drivers/midi/midi1.h>
+#include <zephyr/drivers/midi/midi1_serial.h>
 
 /*
  * Empty NO OP (noop) callbacks assigned if the caller leaves the callbacks

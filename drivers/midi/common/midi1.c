@@ -8,7 +8,7 @@
  */
 #include <stdio.h>
 #include <zephyr/audio/midi.h>
-#include "midi1.h"
+#include <zephyr/drivers/midi/midi1.h>
 
 /**
  * -- == Channel messages == --

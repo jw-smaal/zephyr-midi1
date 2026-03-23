@@ -8,7 +8,7 @@
  * license SPDX-License-Identifier: Apache-2.0
  */
 #include <stdint.h>
-#include "midi1_blockavg.h"
+#include <zephyr/drivers/midi/midi1_blockavg.h>
 
 void midi1_blockavg_init(struct midi1_blockavg *blkavg)
 {

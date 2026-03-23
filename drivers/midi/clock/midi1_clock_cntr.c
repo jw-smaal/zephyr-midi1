@@ -35,9 +35,9 @@ LOG_MODULE_REGISTER(midi1_clock_cntr, CONFIG_LOG_DEFAULT_LEVEL);
 #endif
 
 /* MIDI helpers by J-W Smaal*/
-#include "midi1.h"
-#include "midi1_serial.h"
-#include "midi1_clock_cntr.h"
+#include <zephyr/drivers/midi/midi1.h>
+#include <zephyr/drivers/midi/midi1_serial.h>
+#include <zephyr/drivers/midi/midi1_clock_cntr.h>
 
 /*
  * MIDI clock measurement on a PIN.

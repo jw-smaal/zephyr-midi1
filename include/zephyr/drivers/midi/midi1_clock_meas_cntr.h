@@ -26,9 +26,8 @@
 #include <zephyr/drivers/counter.h>
 #include <zephyr/logging/log.h>
 
-#include "midi1.h"
-#include "midi1_clock_meas_cntr.h"
-#include "midi1_blockavg.h"
+#include <zephyr/drivers/midi/midi1.h>
+#include <zephyr/drivers/midi/midi1_blockavg.h>
 
 struct midi1_clock_meas_cntr_config {
 	const struct device *counter_dev;
