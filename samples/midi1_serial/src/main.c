@@ -15,7 +15,7 @@
 #include <zephyr/sys/printk.h>
 
 /* Moved to ../drivers */
-#include <zephyr/driver/midi/midi1_serial.h>
+#include <zephyr/drivers/midi/midi1_serial.h>
 
 /* Some helpers to print out the note name */
 #include "note.h"
