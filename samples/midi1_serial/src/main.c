@@ -1,10 +1,12 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @brief MIDI 1.0 implementation on serial UART for Zephyr
  *
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @date 20260107
- *
- * license SPDX-License-Identifier: Apache-2.0
  */
 #include <stdio.h>
 #include <zephyr/device.h>

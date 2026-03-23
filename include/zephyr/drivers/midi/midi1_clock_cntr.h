@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef MIDI1_CLOCK_CNTR
 #define MIDI1_CLOCK_CNTR
 /**
@@ -8,7 +12,6 @@
  *
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @date 20251214
- * license SPDX-License-Identifier: Apache-2.0
  */
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>

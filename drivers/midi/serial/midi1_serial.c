@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @file midi1_serial.c
  * @brief MIDI USART implementation on Zephyr RTOS
@@ -13,8 +17,6 @@
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * updated 20241224
  * updated 20260103
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 #include <errno.h>
 #include <zephyr/device.h>

@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @file midi1_serial.h
  * @brief Serial USART implementation of MIDI1.0 for Zephyr
@@ -20,8 +24,6 @@
  * updated 20241224
  * updated 20250103
  * updated 20260107
- *
- * license SPDX-License-Identifier: Apache-2.0
  */
 #ifndef MIDI1_SERIAL_H
 #define MIDI1_SERIAL_H

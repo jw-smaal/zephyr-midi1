@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @file note.h 
  * 
@@ -9,7 +13,6 @@
  *
  * @author Jan-Willem Smaal <usenet@gispen.org> 
  * @updated 20241224
- * @license SPDX-License-Identifier: Apache-2.0
  */
 #ifndef NOTE_H
 #define NOTE_H

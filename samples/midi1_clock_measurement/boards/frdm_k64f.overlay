@@ -1,8 +1,11 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @file frdm_k64f.overlay
  * @brief overlay for MIDI1 clock measurement
  * @author Jan-Willem Smaal <usenet@gispen.org>
- * SPDX-License-Identifier: Apache-2.0
  */
 
 / {

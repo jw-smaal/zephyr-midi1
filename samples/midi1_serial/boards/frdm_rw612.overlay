@@ -1,10 +1,13 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * Device tree overlay created for the FRDM_RW612 development kit
  * adjusted the pinmux so that we can use it for MIDI out and in.
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @date 20241223
  * updated in 20260206
- * license SPDX-License-Identifier: Apache-2.0
  */
  
  /* Let's make sure both are enabled and act in the same way as the pit0 */

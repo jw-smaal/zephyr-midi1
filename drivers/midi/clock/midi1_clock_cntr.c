@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @file midi1_clock_cntr.c
  * @brief implementation of a MIDI1.0 clock sender
@@ -6,7 +10,6 @@
  *
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @date 20251214
- * license SPDX-License-Identifier: Apache-2.0
  */
 // #include <zephyr/audio/midi.h>
 #include <zephyr/device.h>

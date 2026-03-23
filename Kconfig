@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 menu "MIDI 1.0 Support"
 
 rsource "drivers/midi/serial/Kconfig"

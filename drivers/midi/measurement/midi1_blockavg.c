@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @file midi1_blockavg.c
  * @brief average the BPM measurement samples
@@ -5,7 +9,6 @@
  *
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @date 20260102
- * license SPDX-License-Identifier: Apache-2.0
  */
 #include <stdint.h>
 #include <zephyr/drivers/midi/midi1_blockavg.h>

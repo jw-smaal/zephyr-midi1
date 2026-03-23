@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef MIDI1_BLOCKAVG_H
 #define MIDI1_BLOCKAVG_H
 /**
@@ -7,7 +11,6 @@
  *
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @date 20260102
- * license SPDX-License-Identifier: Apache-2.0
  */
 #include <stdint.h>
 

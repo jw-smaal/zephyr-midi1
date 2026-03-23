@@ -1,3 +1,6 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 /**
  * @file midi_clock_meas_cntr.h
@@ -16,7 +19,6 @@
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @date 20251230
  * updated 20260207
- * license SPDX-License-Identifier: Apache-2.0
  */
 #ifndef MIDI1_CLOCK_MEAS_CNTR_H
 #define MIDI1_CLOCK_MEAS_CNTR_H

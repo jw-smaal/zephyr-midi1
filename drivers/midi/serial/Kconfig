@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 config MIDI1_SERIAL
     bool "MIDI1 serial UART driver"
     default y

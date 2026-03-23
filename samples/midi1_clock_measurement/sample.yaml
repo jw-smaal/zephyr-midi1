@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 sample:
   name: MIDI 1.0 Clock Measurement
 tests:

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 config MIDI1_CLOCK_MEAS_CNTR
     bool "MIDI1 clock measurement counter driver"
     default y

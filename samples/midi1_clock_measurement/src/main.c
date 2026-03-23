@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @file main.c
  * @brief MIDI 1.0 Clock Measurement Sample Application

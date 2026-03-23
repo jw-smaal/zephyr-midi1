@@ -1,10 +1,13 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 /**
  * @file midi1.c
  *
  * Created in 2014 ported to Zephyr RTOS in 2024. 
  * @author Jan-Willem Smaal <usenet@gispen.org> 
  * @updated 20241224
- * license SPDX-License-Identifier: Apache-2.0
  */
 #include <stdio.h>
 #include <zephyr/audio/midi.h>

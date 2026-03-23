@@ -1,3 +1,6 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 /*
  * @file midi_clock_meas_cntr.c
@@ -6,7 +9,6 @@
  * Hardware-accurate clock.
  *
  * @author Jan-Willem Smaal <usenet@gispen.org>
- * license SPDX-License-Identifier: Apache-2.0
  */
 #include <stdint.h>
 #include <stdbool.h>

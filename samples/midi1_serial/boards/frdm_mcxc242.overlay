@@ -1,10 +1,13 @@
 /*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
  * @brief FRDM-MCXW242 board configuration for the MIDI1.0 demo 
  * @note
  *
  * @author Jan-Willem Smaal
  * @date 20250101
- * SPDX-License-Identifier: Apache-2.0
  */
  
 /*
