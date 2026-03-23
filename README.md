@@ -59,9 +59,41 @@ Example for defining a MIDI serial instance in your Devicetree overlay:
 / {
     midi_serial_0: midi1-serial-0 {
         compatible = "midi1-serial";
-        uart = <&uart1>;
+        uart = <&uart3>;
         status = "okay";
     };
+
+    aliases {
+        i2c0 = &i2c0;
+        midi = &uart3;
+        counterch0 = &pit0_channel0;
+        counterch1 = &pit0_channel1;
+    };
+};
+
+/*
+ * Classic MIDI1.0 over DIN5 plug
+ */
+&uart3 {
+    status = "okay";
+    /* Set it to the MIDI baud rate */
+    current-speed = <31250>;
+};
+
+/* 
+ * Because on the FRDM_K64F each channel has it's own IRQ we need to be 
+ * specific here can't just enable pit0 and hope for the best. 
+ */ 
+&pit0 {
+    status = "okay";
+};
+
+&pit0_channel0 {
+    status = "okay";
+};
+
+&pit0_channel1 {
+    status = "okay";
 };
 ```
 
