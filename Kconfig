@@ -1,3 +1,7 @@
-osource "drivers/midi/serial/Kconfig"
-osource "drivers/midi/clock/Kconfig"
-osource "drivers/midi/measurement/Kconfig"
+menu "MIDI 1.0 Support"
+
+rsource "drivers/midi/serial/Kconfig"
+rsource "drivers/midi/clock/Kconfig"
+rsource "drivers/midi/measurement/Kconfig"
+
+endmenu
