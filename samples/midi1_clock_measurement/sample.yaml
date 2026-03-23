@@ -1,0 +1,12 @@
+sample:
+  name: MIDI 1.0 Clock Measurement
+tests:
+  sample.midi1_clock_meas:
+    platform_allow:
+      - frdm_k64f
+      - frdm_mcxc242
+    harness: console
+    harness_config:
+      type: one_line
+      regex:
+        - "Incoming Clock: (.*) BPM"

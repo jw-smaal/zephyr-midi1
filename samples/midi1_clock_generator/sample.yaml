@@ -1,0 +1,12 @@
+sample:
+  name: MIDI 1.0 Clock Generator
+tests:
+  sample.midi1_clock_gen:
+    platform_allow:
+      - frdm_k64f
+      - frdm_mcxc242
+    harness: console
+    harness_config:
+      type: one_line
+      regex:
+        - "Clock running: (.*) BPM"

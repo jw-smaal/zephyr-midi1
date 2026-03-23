@@ -1,0 +1,35 @@
+/**
+ * @file frdm_mcxc242.overlay
+ * @brief overlay for MIDI1 clock measurement on MCXC242
+ * @author Jan-Willem Smaal <usenet@gispen.org>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	midi1_serial_0: midi1-serial-0 {
+		compatible = "midi1_serial";
+		uart = <&lpuart1>;
+		status = "okay";
+	};
+
+	midi1_clock_meas_cntr_0: midi1-clock-meas-cntr-0 {
+		compatible = "midi1_clock_meas_cntr";
+		counter = <&pit0_channel1>;
+		status = "okay";
+	};
+};
+
+&lpuart1 {
+	status = "okay";
+	current-speed = <31250>;
+};
+
+&pit0 {
+	status = "okay";
+};
+
+&pit0_channel1 {
+	status = "okay";
+};
+
+/* EOF */
