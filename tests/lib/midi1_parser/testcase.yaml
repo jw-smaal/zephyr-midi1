@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+tests:
+  drivers.midi.parser:
+    tags: midi
+    platform_allow:
+      - native_sim
+      - qemu_cortex_m0
+      - qemu_cortex_m3
+

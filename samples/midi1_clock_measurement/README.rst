@@ -5,7 +5,7 @@ MIDI 1.0 Clock Measurement Sample
 
 :License: Apache-2.0
 :Author: Jan-Willem Smaal <usenet@gispen.org>
-:Copyright: (c) Jan-Willem Smaal <usenet@gispen.org>
+:Copyright: Jan-Willem Smaal <usenet@gispen.org>
 
 A hardware-based MIDI 1.0 timing clock measurement implementation for Zephyr RTOS.
 

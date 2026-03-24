@@ -6,7 +6,7 @@ Zephyr MIDI1 Module
 A standalone Zephyr RTOS module providing MIDI 1.0 drivers and protocol helpers.
 
 :Author: Jan-Willem Smaal <usenet@gispen.org>
-:Copyright: (c) Jan-Willem Smaal <usenet@gispen.org>
+:Copyright: Jan-Willem Smaal <usenet@gispen.org>
 :License: Apache-2.0
 
 Features
