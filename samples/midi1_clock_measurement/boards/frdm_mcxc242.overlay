@@ -11,7 +11,7 @@
 / {
 	midi1_serial_0: midi1-serial-0 {
 		compatible = "midi1_serial";
-		uart = <&lpuart1>;
+		uart = <&lpuart0>;
 		status = "okay";
 	};
 
@@ -22,7 +22,7 @@
 	};
 };
 
-&lpuart1 {
+&lpuart0 {
 	status = "okay";
 	current-speed = <31250>;
 };
