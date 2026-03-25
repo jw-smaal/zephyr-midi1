@@ -20,6 +20,9 @@
 /* Some helpers to print out the note name */
 #include "note.h"
 
+/* Via Kconfig (menuconfig) the channel can be set */ 
+#define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1)
+
 /**
  * @brief Callbacks/delegates for 'midi1_serial.c' after parsing MIDI1.0
  *
@@ -137,11 +140,11 @@ int main(void)
 	const struct midi1_serial_api *mid = midi->api;
 
 	/* Using the API pointer */
-	mid->note_on(midi, CH4, 1, 60);
+	mid->note_on(midi, MY_MIDI1_CHAN, 1, 60);
 	k_sleep(K_MSEC(290));
 
 	/* Using the public interface for the driver same effect */
-	midi1_serial_note_off(midi, CH4, 1, 60);
+	midi1_serial_note_off(midi, MY_MIDI1_CHAN, 1, 60);
 	k_sleep(K_MSEC(290));
 
 	while (1) {
@@ -149,32 +152,25 @@ int main(void)
 		for (uint8_t value = 0; value < 16; value++) {
 			/* CC1 sweep */
 			//midi1_serial_control_change(midi, CH16, 1, value);
-			mid->control_change(midi, CH16, 1, value);
+			mid->control_change(midi, MY_MIDI1_CHAN, 1, value);
 			k_sleep(K_MSEC(290));
 		}
 		/* Running status is not used > 300 ms */
 		for (uint8_t value = 0; value < 16; value++) {
 			/* note sweep */
 			//midi1_serial_note_on(midi, CH7, value, 100);
-			mid->note_on(midi, CH7, value, 100);
+			mid->note_on(midi, MY_MIDI1_CHAN, value, 100);
 			k_sleep(K_MSEC(310));
 		}
 		/* Send as quickly as the uart poll out will allow */
 		for (uint8_t value = 0; value < 16; value++) {
 			/* note off sweep */
 			//midi1_serial_note_off(midi, CH7, value, 100);
-			mid->note_off(midi, CH7, value, 100);
+			mid->note_off(midi, MY_MIDI1_CHAN, value, 100);
 		}
 		for (uint8_t value = 0; value < 16; value++) {
-			// midi1_serial_start(midi);
 			mid->start(midi);
 			k_sleep(K_MSEC(100));
-			for (uint8_t i = 0; i < 128; i++) {
-				// midi1_serial_timingclock(midi);
-				mid->timingclock(midi);
-				k_sleep(K_MSEC(20));
-			}
-			// midi1_serial_stop(midi);
 			mid->stop(midi);
 			k_sleep(K_MSEC(100));
 		}
