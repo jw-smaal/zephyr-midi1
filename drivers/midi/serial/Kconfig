@@ -20,3 +20,11 @@ config MIDI1_SERIAL_RUNNING_STATUS_TIMEOUT_MS
 config MIDI1_SERIAL_ISR_MSGQ_SIZE_MS
     int "MIDI1 serial size of the MIDI serial UART rx message queue"
     default 128
+
+config MIDI1_SERIAL_TX_BUF_SIZE
+    int "MIDI1 serial UART transmit buffer size (bytes)"
+    default 128
+    help
+      The size of the software ring buffer for interrupt-driven TX.
+      A larger buffer prevents thread blocking but increases maximum
+      MIDI latency if the buffer fills up.

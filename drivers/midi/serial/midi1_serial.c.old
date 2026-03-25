@@ -114,64 +114,20 @@ static void midi1_serial_isr_callback(const struct device *dev, void *user_data)
 	if (!uart_irq_update(cfg->uart)) {
 		return;
 	}
+	if (!uart_irq_rx_ready(cfg->uart)) {
+		return;
+	}
 
-	/* Handle TX: Hardware is ready for more data */
-	if (uart_irq_tx_ready(cfg->uart)) {
-		uint8_t tx_byte;
-
-		if (ring_buf_get(&data->tx_ringbuf, &tx_byte, 1) > 0) {
-			uart_fifo_fill(cfg->uart, &tx_byte, 1);
-		} else {
-			/* No more data to send, silence the interrupt */
-			uart_irq_tx_disable(cfg->uart);
+	/*
+	 * read until FIFO empty
+	 */
+	while (uart_fifo_read(cfg->uart, &c, 1) == 1) {
+		if (k_msgq_put(&data->msgq, &c, K_NO_WAIT) != 0) {
+			/*
+			 * Buffer full, message dropped
+			 */
+			data->overrun_count++;
 		}
-	}
-
-	/* Handle RX: Data received from hardware */
-	if (uart_irq_rx_ready(cfg->uart)) {
-		/*
-		 * read until FIFO empty
-		 */
-		while (uart_fifo_read(cfg->uart, &c, 1) == 1) {
-			if (k_msgq_put(&data->msgq, &c, K_NO_WAIT) != 0) {
-				/*
-				 * Buffer full, message dropped
-				 */
-				data->overrun_count++;
-			}
-		}
-	}
-}
-
-/* Helper for standard messages (Notes, CC, SysEx) */
-static void midi1_serial_tx_enqueue(const struct device *dev, uint8_t byte)
-{
-	const struct midi1_serial_config *cfg = dev->config;
-	struct midi1_serial_data *data = dev->data;
-
-	/* Critical section: ensure the ISR doesn't modify the ringbuf while we add to it */
-	unsigned int key = irq_lock();
-
-	if (ring_buf_put(&data->tx_ringbuf, &byte, 1) > 0) {
-		uart_irq_tx_enable(cfg->uart);
-	} else {
-		data->overrun_count++;
-	}
-	irq_unlock(key);
-}
-
-/* Helper for high-priority messages (Clock) - Preserves precision */
-static void midi1_serial_tx_immediate(const struct device *dev, uint8_t byte)
-{
-	const struct midi1_serial_config *cfg = dev->config;
-	struct midi1_serial_data *data = dev->data;
-
-	/* Temporarily stop the background TX interrupt to prevent hardware collision */
-	uart_irq_tx_disable(cfg->uart);
-	uart_poll_out(cfg->uart, byte);
-	/* If the background buffer isn't empty, restore the interrupt */
-	if (!ring_buf_is_empty(&data->tx_ringbuf)) {
-		uart_irq_tx_enable(cfg->uart);
 	}
 }
 
@@ -216,7 +172,6 @@ int midi1_serial_init(const struct device *dev)
 	/*
 	 * Assign a MSQ to this instance
 	 */
-	ring_buf_init(&data->tx_ringbuf, sizeof(data->tx_buffer), data->tx_buffer);
 	k_msgq_init(&data->msgq, data->msgq_buffer, MSG_SIZE, MSGQ_SIZE);
 	k_mutex_init(&data->tx_lock);
 
@@ -306,7 +261,9 @@ static bool midi1_need_status(struct midi1_serial_data *data, uint8_t status)
 
 void midi1_serial_note_on(const struct device *dev, uint8_t channel, uint8_t key, uint8_t velocity)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
+	uint32_t now = k_uptime_get_32();
 	uint8_t status = C_NOTE_ON | (channel & 0x0F);
 
 	if (key > 127 || velocity > 127) {
@@ -315,20 +272,22 @@ void midi1_serial_note_on(const struct device *dev, uint8_t channel, uint8_t key
 
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	if (midi1_need_status(data, status)) {
-		midi1_serial_tx_enqueue(dev, status);
+		uart_poll_out(cfg->uart, status);
 		data->running_status_tx = status;
 		data->running_status_tx_count = 0;
-		data->last_status_tx_time = k_uptime_get_32();
+		data->last_status_tx_time = now;
 	}
-	midi1_serial_tx_enqueue(dev, key);
-	midi1_serial_tx_enqueue(dev, velocity);
+	uart_poll_out(cfg->uart, key);
+	uart_poll_out(cfg->uart, velocity);
 	data->running_status_tx_count++;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_serial_note_off(const struct device *dev, uint8_t channel, uint8_t key, uint8_t velocity)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
+	uint32_t now = k_uptime_get_32();
 	uint8_t status = C_NOTE_OFF | (channel & 0x0F);
 
 	if (key > 127 || velocity > 127) {
@@ -337,13 +296,13 @@ void midi1_serial_note_off(const struct device *dev, uint8_t channel, uint8_t ke
 
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	if (midi1_need_status(data, status)) {
-		midi1_serial_tx_enqueue(dev, status);
+		uart_poll_out(cfg->uart, status);
 		data->running_status_tx = status;
 		data->running_status_tx_count = 0;
-		data->last_status_tx_time = k_uptime_get_32();
+		data->last_status_tx_time = now;
 	}
-	midi1_serial_tx_enqueue(dev, key);
-	midi1_serial_tx_enqueue(dev, velocity);
+	uart_poll_out(cfg->uart, key);
+	uart_poll_out(cfg->uart, velocity);
 	data->running_status_tx_count++;
 	k_mutex_unlock(&data->tx_lock);
 }
@@ -351,7 +310,9 @@ void midi1_serial_note_off(const struct device *dev, uint8_t channel, uint8_t ke
 void midi1_serial_control_change(const struct device *dev, uint8_t channel, uint8_t controller,
 				 uint8_t val)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
+	uint32_t now = k_uptime_get_32();
 	uint8_t status = C_CONTROL_CHANGE | (channel & 0x0F);
 
 	if (controller > 127 || val > 127) {
@@ -360,20 +321,22 @@ void midi1_serial_control_change(const struct device *dev, uint8_t channel, uint
 
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	if (midi1_need_status(data, status)) {
-		midi1_serial_tx_enqueue(dev, status);
+		uart_poll_out(cfg->uart, status);
 		data->running_status_tx = status;
 		data->running_status_tx_count = 0;
-		data->last_status_tx_time = k_uptime_get_32();
+		data->last_status_tx_time = now;
 	}
-	midi1_serial_tx_enqueue(dev, controller);
-	midi1_serial_tx_enqueue(dev, val);
+	uart_poll_out(cfg->uart, controller);
+	uart_poll_out(cfg->uart, val);
 	data->running_status_tx_count++;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_serial_channelaftertouch(const struct device *dev, uint8_t channel, uint8_t val)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
+	uint32_t now = k_uptime_get_32();
 	uint8_t status = C_CHANNEL_AFTERTOUCH | (channel & 0x0F);
 
 	if (val > 127) {
@@ -382,19 +345,21 @@ void midi1_serial_channelaftertouch(const struct device *dev, uint8_t channel, u
 
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	if (midi1_need_status(data, status)) {
-		midi1_serial_tx_enqueue(dev, status);
+		uart_poll_out(cfg->uart, status);
 		data->running_status_tx = status;
 		data->running_status_tx_count = 0;
-		data->last_status_tx_time = k_uptime_get_32();
+		data->last_status_tx_time = now;
 	}
-	midi1_serial_tx_enqueue(dev, val);
+	uart_poll_out(cfg->uart, val);
 	data->running_status_tx_count++;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_serial_program_change(const struct device *dev, uint8_t channel, uint8_t number)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
+	uint32_t now = k_uptime_get_32();
 	uint8_t status = C_PROGRAM_CHANGE | (channel & 0x0F);
 
 	if (number > 127) {
@@ -403,12 +368,12 @@ void midi1_serial_program_change(const struct device *dev, uint8_t channel, uint
 
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	if (midi1_need_status(data, status)) {
-		midi1_serial_tx_enqueue(dev, status);
+		uart_poll_out(cfg->uart, status);
 		data->running_status_tx = status;
 		data->running_status_tx_count = 0;
-		data->last_status_tx_time = k_uptime_get_32();
+		data->last_status_tx_time = now;
 	}
-	midi1_serial_tx_enqueue(dev, number);
+	uart_poll_out(cfg->uart, number);
 	data->running_status_tx_count++;
 	k_mutex_unlock(&data->tx_lock);
 }
@@ -416,7 +381,9 @@ void midi1_serial_program_change(const struct device *dev, uint8_t channel, uint
 void midi1_serial_polyaftertouch(const struct device *dev, uint8_t channel, uint8_t key,
 				 uint8_t val)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
+	uint32_t now = k_uptime_get_32();
 	uint8_t status = C_POLYPHONIC_AFTERTOUCH | (channel & 0x0F);
 
 	if (key > 127 || val > 127) {
@@ -425,13 +392,13 @@ void midi1_serial_polyaftertouch(const struct device *dev, uint8_t channel, uint
 
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	if (midi1_need_status(data, status)) {
-		midi1_serial_tx_enqueue(dev, status);
+		uart_poll_out(cfg->uart, status);
 		data->running_status_tx = status;
 		data->running_status_tx_count = 0;
-		data->last_status_tx_time = k_uptime_get_32();
+		data->last_status_tx_time = now;
 	}
-	midi1_serial_tx_enqueue(dev, key);
-	midi1_serial_tx_enqueue(dev, val);
+	uart_poll_out(cfg->uart, key);
+	uart_poll_out(cfg->uart, val);
 	data->running_status_tx_count++;
 	k_mutex_unlock(&data->tx_lock);
 }
@@ -447,7 +414,9 @@ void midi1_serial_modwheel(const struct device *dev, uint8_t channel, uint16_t v
 
 void midi1_serial_pitchwheel(const struct device *dev, uint8_t channel, uint16_t val)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
+	uint32_t now = k_uptime_get_32();
 	uint8_t status = C_PITCH_WHEEL | (channel & 0x0F);
 
 	if (val > 16383) {
@@ -456,10 +425,10 @@ void midi1_serial_pitchwheel(const struct device *dev, uint8_t channel, uint16_t
 
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	if (midi1_need_status(data, status)) {
-		midi1_serial_tx_enqueue(dev, status);
+		uart_poll_out(cfg->uart, status);
 		data->running_status_tx = status;
 		data->running_status_tx_count = 0;
-		data->last_status_tx_time = k_uptime_get_32();
+		data->last_status_tx_time = now;
 	}
 	/*
 	 * Value is 14 bits so need to shift 7
@@ -467,100 +436,112 @@ void midi1_serial_pitchwheel(const struct device *dev, uint8_t channel, uint16_t
 	/*
 	 * LSB first
 	 */
-	midi1_serial_tx_enqueue(dev, val & MIDI_DATA);
+	uart_poll_out(cfg->uart, val & MIDI_DATA);
 	/*
 	 * then MSB
 	 */
-	midi1_serial_tx_enqueue(dev, (val >> 7) & MIDI_DATA);
+	uart_poll_out(cfg->uart, (val >> 7) & MIDI_DATA);
 	data->running_status_tx_count++;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_serial_mtc_quarter_frame(const struct device *dev, uint8_t data_byte)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
-	midi1_serial_tx_enqueue(dev, SYSTEM_MTC_QUARTER_FRAME);
-	midi1_serial_tx_enqueue(dev, data_byte & MIDI_DATA);
+	uart_poll_out(cfg->uart, SYSTEM_MTC_QUARTER_FRAME);
+	uart_poll_out(cfg->uart, data_byte & MIDI_DATA);
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_serial_song_position(const struct device *dev, uint16_t pos)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
-	midi1_serial_tx_enqueue(dev, SYSTEM_SONG_POSITION);
-	midi1_serial_tx_enqueue(dev, pos & 0x7F);
-	midi1_serial_tx_enqueue(dev, (pos >> 7) & MIDI_DATA);
+	uart_poll_out(cfg->uart, SYSTEM_SONG_POSITION);
+	uart_poll_out(cfg->uart, pos & 0x7F);
+	uart_poll_out(cfg->uart, (pos >> 7) & MIDI_DATA);
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_serial_song_select(const struct device *dev, uint8_t song)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
-	midi1_serial_tx_enqueue(dev, SYSTEM_SONG_SELECT);
-	midi1_serial_tx_enqueue(dev, song & MIDI_DATA);
+	uart_poll_out(cfg->uart, SYSTEM_SONG_SELECT);
+	uart_poll_out(cfg->uart, song & MIDI_DATA);
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_serial_tune_request(const struct device *dev)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
-	midi1_serial_tx_enqueue(dev, SYSTEM_TUNE_REQUEST);
+	uart_poll_out(cfg->uart, SYSTEM_TUNE_REQUEST);
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_serial_timingclock(const struct device *dev)
 {
-	midi1_serial_tx_immediate(dev, RT_TIMING_CLOCK);
+	const struct midi1_serial_config *cfg = dev->config;
+	uart_poll_out(cfg->uart, RT_TIMING_CLOCK);
 }
 
 void midi1_serial_start(const struct device *dev)
 {
-	midi1_serial_tx_immediate(dev, RT_START);
+	const struct midi1_serial_config *cfg = dev->config;
+	uart_poll_out(cfg->uart, RT_START);
 }
 
 void midi1_serial_continue(const struct device *dev)
 {
-	midi1_serial_tx_immediate(dev, RT_CONTINUE);
+	const struct midi1_serial_config *cfg = dev->config;
+	uart_poll_out(cfg->uart, RT_CONTINUE);
 }
 
 void midi1_serial_stop(const struct device *dev)
 {
-	midi1_serial_tx_immediate(dev, RT_STOP);
+	const struct midi1_serial_config *cfg = dev->config;
+	uart_poll_out(cfg->uart, RT_STOP);
 }
 
 void midi1_serial_active_sensing(const struct device *dev)
 {
-	midi1_serial_tx_immediate(dev, RT_ACTIVE_SENSING);
+	const struct midi1_serial_config *cfg = dev->config;
+	uart_poll_out(cfg->uart, RT_ACTIVE_SENSING);
 }
 
 void midi1_serial_reset(const struct device *dev)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
-	midi1_serial_tx_immediate(dev, RT_RESET);
+	uart_poll_out(cfg->uart, RT_RESET);
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_sysex_start(const struct device *dev)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
-	midi1_serial_tx_enqueue(dev, SYSTEM_EXCLUSIVE_START);
+	uart_poll_out(cfg->uart, SYSTEM_EXCLUSIVE_START);
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_sysex_char(const struct device *dev, uint8_t c)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 
 	/*
@@ -568,7 +549,7 @@ void midi1_sysex_char(const struct device *dev, uint8_t c)
 	 */
 	if (!(c & CHANNEL_VOICE_MASK)) {
 		k_mutex_lock(&data->tx_lock, K_FOREVER);
-		midi1_serial_tx_enqueue(dev, c);
+		uart_poll_out(cfg->uart, c);
 		k_mutex_unlock(&data->tx_lock);
 	}
 }
@@ -582,9 +563,10 @@ void midi1_sysex_data_bulk(const struct device *dev, const uint8_t *data, uint32
 
 void midi1_sysex_stop(const struct device *dev)
 {
+	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
-	midi1_serial_tx_enqueue(dev, SYSTEM_EXCLUSIVE_END);
+	uart_poll_out(cfg->uart, SYSTEM_EXCLUSIVE_END);
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
 }

@@ -32,7 +32,6 @@
 #include <string.h>
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
-#include <zephyr/sys/ring_buffer.h>
 
 /* MIDI1.0 definitions by Jan-Willem Smaal */
 #include <zephyr/drivers/midi/midi1.h>
@@ -46,7 +45,6 @@
 /* Kconfig has this tuneable value now for the MSGQ  */
 #define MSGQ_SIZE CONFIG_MIDI1_SERIAL_ISR_MSGQ_SIZE_MS
 #define MSG_SIZE  sizeof(uint8_t)
-#define TX_BUF_SIZE CONFIG_MIDI1_SERIAL_TX_BUF_SIZE
 
 /*-----------------------------------------------------------------------*/
 struct midi1_serial_config {
@@ -114,12 +112,6 @@ struct midi1_serial_data {
 	struct k_msgq msgq;
 	uint8_t msgq_buffer[MSGQ_SIZE];
 	uint32_t overrun_count;
-
-	/*
-	 * TX Ring Buffer for interrupt-driven output
-	 */
-	struct ring_buf tx_ringbuf;
-	uint8_t tx_buffer[TX_BUF_SIZE];
 
 	/*
 	 * Set when processing sysex data
