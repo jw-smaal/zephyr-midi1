@@ -33,6 +33,7 @@
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/ring_buffer.h>
+#include <zephyr/sys/atomic.h>
 
 /* MIDI1.0 definitions by Jan-Willem Smaal */
 #include <zephyr/drivers/midi/midi1.h>
@@ -113,7 +114,7 @@ struct midi1_serial_data {
 	 */
 	struct k_msgq msgq;
 	uint8_t msgq_buffer[MSGQ_SIZE];
-	uint32_t overrun_count;
+	atomic_t overrun_count;
 
 	/*
 	 * TX Ring Buffer for interrupt-driven output

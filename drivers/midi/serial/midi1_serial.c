@@ -23,6 +23,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/ring_buffer.h>
+#include <zephyr/sys/atomic.h>
 
 #include <zephyr/drivers/midi/midi1.h>
 #include <zephyr/drivers/midi/midi1_serial.h>
@@ -137,7 +138,7 @@ static void midi1_serial_isr_callback(const struct device *dev, void *user_data)
 				/*
 				 * Buffer full, message dropped
 				 */
-				data->overrun_count++;
+				atomic_inc(&data->overrun_count);
 			}
 		}
 	}
@@ -155,7 +156,7 @@ static void midi1_serial_tx_enqueue(const struct device *dev, uint8_t byte)
 	if (ring_buf_put(&data->tx_ringbuf, &byte, 1) > 0) {
 		uart_irq_tx_enable(cfg->uart);
 	} else {
-		data->overrun_count++;
+		atomic_inc(&data->overrun_count);
 	}
 	irq_unlock(key);
 }
@@ -187,7 +188,7 @@ int midi1_serial_init(const struct device *dev)
 	data->third_byte_flag = 0;
 	data->midi_c2 = 0;
 	data->midi_c3 = 0;
-	data->overrun_count = 0;
+	atomic_set(&data->overrun_count, 0);
 
 	data->running_status_tx = 0;
 	data->running_status_tx_count = 0;
