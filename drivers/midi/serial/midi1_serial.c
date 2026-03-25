@@ -448,8 +448,8 @@ void midi1_serial_modwheel(const struct device *dev, uint8_t channel, uint16_t v
 {
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
-	midi1_serial_control_change(dev, channel, CTL_MSB_MODWHEEL, (val >> 7) & 0x7F);
-	midi1_serial_control_change(dev, channel, CTL_LSB_MODWHEEL, val & 0x7F);
+	midi1_serial_control_change(dev, channel, CTL_MSB_MODWHEEL, (uint8_t)((val >> 7) & 0x7F));
+	midi1_serial_control_change(dev, channel, CTL_LSB_MODWHEEL, (uint8_t)(val & 0x7F));
 	k_mutex_unlock(&data->tx_lock);
 }
 
@@ -475,11 +475,11 @@ void midi1_serial_pitchwheel(const struct device *dev, uint8_t channel, uint16_t
 	/*
 	 * LSB first
 	 */
-	midi1_serial_tx_enqueue(dev, val & MIDI_DATA);
+	midi1_serial_tx_enqueue(dev, (uint8_t)(val & MIDI_DATA));
 	/*
 	 * then MSB
 	 */
-	midi1_serial_tx_enqueue(dev, (val >> 7) & MIDI_DATA);
+	midi1_serial_tx_enqueue(dev, (uint8_t)((val >> 7) & MIDI_DATA));
 	data->running_status_tx_count++;
 	k_mutex_unlock(&data->tx_lock);
 }
@@ -499,8 +499,8 @@ void midi1_serial_song_position(const struct device *dev, uint16_t pos)
 	struct midi1_serial_data *data = dev->data;
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	midi1_serial_tx_enqueue(dev, SYSTEM_SONG_POSITION);
-	midi1_serial_tx_enqueue(dev, pos & 0x7F);
-	midi1_serial_tx_enqueue(dev, (pos >> 7) & MIDI_DATA);
+	midi1_serial_tx_enqueue(dev, (uint8_t)(pos & 0x7F));
+	midi1_serial_tx_enqueue(dev, (uint8_t)((pos >> 7) & MIDI_DATA));
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
 }
