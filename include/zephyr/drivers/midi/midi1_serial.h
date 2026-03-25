@@ -111,6 +111,7 @@ struct midi1_serial_data {
 	 */
 	struct k_msgq msgq;
 	uint8_t msgq_buffer[MSGQ_SIZE];
+	uint32_t overrun_count;
 
 	/*
 	 * Set when processing sysex data

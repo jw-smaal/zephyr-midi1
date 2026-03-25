@@ -126,6 +126,7 @@ static void midi1_serial_isr_callback(const struct device *dev, void *user_data)
 			/*
 			 * Buffer full, message dropped
 			 */
+			data->overrun_count++;
 		}
 	}
 }
@@ -142,6 +143,7 @@ int midi1_serial_init(const struct device *dev)
 	data->third_byte_flag = 0;
 	data->midi_c2 = 0;
 	data->midi_c3 = 0;
+	data->overrun_count = 0;
 
 	data->running_status_tx = 0;
 	data->running_status_tx_count = 0;
@@ -625,19 +627,19 @@ void midi1_serial_receiveparser(const struct device *dev)
 		uint8_t status = data->running_status_rx & 0xF0;
 		uint8_t chan = data->running_status_rx & 0x0F;
 
-		if (status == 0x90) {
+		if (status == C_NOTE_ON) {
 			if (data->midi_c3 == 0) {
 				data->cb.note_off(chan, data->midi_c2, 0);
 			} else {
 				data->cb.note_on(chan, data->midi_c2, data->midi_c3);
 			}
-		} else if (status == 0x80) {
+		} else if (status == C_NOTE_OFF) {
 			data->cb.note_off(chan, data->midi_c2, data->midi_c3);
-		} else if (status == 0xE0) {
+		} else if (status == C_PITCH_WHEEL) {
 			data->cb.pitchwheel(chan, data->midi_c2, data->midi_c3);
-		} else if (status == 0xA0) {
+		} else if (status == C_POLYPHONIC_AFTERTOUCH) {
 			data->cb.poly_aftertouch(chan, data->midi_c2, data->midi_c3);
-		} else if (status == 0xB0) {
+		} else if (status == C_CONTROL_CHANGE) {
 			data->cb.control_change(chan, data->midi_c2, data->midi_c3);
 		}
 	} else {
@@ -658,9 +660,9 @@ void midi1_serial_receiveparser(const struct device *dev)
 		} else if (data->running_status_rx < 0xE0) {
 			uint8_t status = data->running_status_rx & 0xF0;
 			uint8_t chan = data->running_status_rx & 0x0F;
-			if (status == 0xC0) {
+			if (status == C_PROGRAM_CHANGE) {
 				data->cb.program_change(chan, c);
-			} else if (status == 0xD0) {
+			} else if (status == C_CHANNEL_AFTERTOUCH) {
 				data->cb.channel_aftertouch(chan, c);
 			}
 		}
