@@ -120,10 +120,16 @@ static void midi1_serial_isr_callback(const struct device *dev, void *user_data)
 	if (uart_irq_tx_ready(cfg->uart)) {
 		uint8_t tx_byte;
 
-		if (ring_buf_get(&data->tx_ringbuf, &tx_byte, 1) > 0) {
+		/* Check High-Priority Real-Time buffer first */
+		if (ring_buf_get(&data->tx_rt_ringbuf, &tx_byte, 1) > 0) {
 			uart_fifo_fill(cfg->uart, &tx_byte, 1);
-		} else {
-			/* No more data to send, silence the interrupt */
+		}
+		/* If empty, fall back to normal buffer */
+		else if (ring_buf_get(&data->tx_ringbuf, &tx_byte, 1) > 0) {
+			uart_fifo_fill(cfg->uart, &tx_byte, 1);
+		}
+		/* No more data to send, silence the interrupt */
+		else {
 			uart_irq_tx_disable(cfg->uart);
 		}
 	}
@@ -167,13 +173,13 @@ static void midi1_serial_tx_immediate(const struct device *dev, uint8_t byte)
 	const struct midi1_serial_config *cfg = dev->config;
 	struct midi1_serial_data *data = dev->data;
 
-	/* Temporarily stop the background TX interrupt to prevent hardware collision */
-	uart_irq_tx_disable(cfg->uart);
-	uart_poll_out(cfg->uart, byte);
-	/* If the background buffer isn't empty, restore the interrupt */
-	if (!ring_buf_is_empty(&data->tx_ringbuf)) {
+	unsigned int key = irq_lock();
+	if (ring_buf_put(&data->tx_rt_ringbuf, &byte, 1) > 0) {
 		uart_irq_tx_enable(cfg->uart);
+	} else {
+		/* Optional: count RT overruns here */
 	}
+	irq_unlock(key);
 }
 
 /**
@@ -218,6 +224,7 @@ int midi1_serial_init(const struct device *dev)
 	 * Assign a MSQ to this instance
 	 */
 	ring_buf_init(&data->tx_ringbuf, sizeof(data->tx_buffer), data->tx_buffer);
+	ring_buf_init(&data->tx_rt_ringbuf, sizeof(data->tx_rt_buffer), data->tx_rt_buffer);
 	k_msgq_init(&data->msgq, data->msgq_buffer, MSG_SIZE, MSGQ_SIZE);
 	k_mutex_init(&data->tx_lock);
 

@@ -123,6 +123,13 @@ struct midi1_serial_data {
 	uint8_t tx_buffer[TX_BUF_SIZE];
 
 	/*
+	 * TX Ring Buffer specifically for Real-Time messages (high priority)
+	 * Only needs to be very small (e.g., 8 bytes)
+	 */
+	struct ring_buf tx_rt_ringbuf;
+	uint8_t tx_rt_buffer[8];
+
+	/*
 	 * Set when processing sysex data
 	 */
 	bool in_sysex;
