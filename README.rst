@@ -89,10 +89,10 @@ Example for defining a MIDI serial instance in your Devicetree overlay:
        current-speed = <31250>;
    };
 
-   /* 
-    * Because on the FRDM_K64F each channel has it's own IRQ we need to be 
-    * specific here can't just enable pit0 and hope for the best. 
-    */ 
+   /*
+    * Because on the FRDM_K64F each channel has its own IRQ we need to be
+    * specific here; we can't just enable pit0 and hope for the best.
+    */
    &pit0 {
        status = "okay";
    };
