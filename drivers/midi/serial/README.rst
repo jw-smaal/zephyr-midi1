@@ -1,5 +1,5 @@
 MIDI Serial Driver for Zephyr RTOS
-################################
+##################################
 
 This driver implements the MIDI 1.0 protocol over a serial UART interface, featuring a hybrid transmit architecture optimized for both low jitter (MIDI Clock) and high throughput (Note/SysEx data).
 

@@ -11,9 +11,9 @@ A hardware MIDI 1.0 serial UART implementation.
 Features
 ********
 
-* API for channel and common mode messages 
-* Callbacks for parsed MIDI 1.0 messages 
-* Configurable settings for the receive buffers 
+* API for channel and common mode messages
+* Callbacks for parsed MIDI 1.0 messages
+* Configurable settings for the receive buffers
 * Timeout for running status is configurable
 
 Hardware Requirements
@@ -22,8 +22,8 @@ Hardware Requirements
 Tested on:
 
 * **NXP FRDM-MCXC242**
-* **NXP FRDM-K64F** 
-* **NXP FRDM-MCXA156** 
+* **NXP FRDM-K64F**
+* **NXP FRDM-MCXA156**
 
 Tested with various hardware synthesizers.
 
@@ -40,8 +40,8 @@ Running
 *******
 
 * Be careful with logging to the console; depending on the board
-  wiring, this may go out the MIDI 1.0 port.   
-* The popular Arduino MIDI shields are not designed for 3.3V drive. With 
+  wiring, this may go out the MIDI 1.0 port.
+* The popular Arduino MIDI shields are not designed for 3.3V drive. With
   lower power LPUARTs, you are advised to use an output buffer that can sink
   the 5 mA current loop. See the MIDI 1.0 recommended circuit for 3.3V.
 
