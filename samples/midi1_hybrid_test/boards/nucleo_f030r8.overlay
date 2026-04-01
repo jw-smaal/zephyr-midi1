@@ -1,0 +1,144 @@
+/*
+ * Overlay for the KORG NTS-1 custom board. 
+ * created for zephyr by Jan-Willem Smaal 20250116
+ */
+
+&leds {
+	compatible = "gpio-leds";
+	ld1: ld_1 {
+		gpios = < &gpioc 10 0x0 >;
+		label = "LED1";
+	};
+	ld2: ld_2 {
+		gpios = < &gpioc 12 0x0 >;
+		label = "LED2";
+	};
+	ld3: ld_3 {
+		gpios = < &gpiof 6 0x0 >;
+		label = "LED3";
+	};
+	ld4: ld_4 {
+		gpios = < &gpiof 7 0x0 >;
+		label = "LED3";
+	};
+	ld5: ld_5 {
+		gpios = < &gpioa 15 0x0 >;
+		label = "LED3";
+	};
+	ld6: ld_6 {
+		gpios = < &gpiob 7 0x0 >;
+		label = "LED3";
+	};
+	ld7: ld_7 {
+		gpios = < &gpioc 13 0x0 >;
+		label = "LED3";
+	};
+	ld8: ld_8 {
+		gpios = < &gpioc 14 0x0 >;
+		label = "LED3";
+	};
+};
+
+/ {
+	buttons {
+		compatible = "gpio-keys";
+		sw1: sw_1 {
+			gpios = <&gpioc 8 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Button 1"; 
+		};
+		sw2: sw_2 {
+			gpios = <&gpioc 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Button 2"; 
+		};
+		sw3: sw_3 {
+			gpios = <&gpioc 5 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Button 3"; 
+		};
+		sw4: sw_4 {
+			gpios = <&gpioa 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Button 4"; 
+		};
+		sw5: sw_5 {
+			gpios = <&gpioa 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Button 5"; 
+		};
+		sw6: sw_6 {
+			gpios = <&gpiob 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Button 6"; 
+		};
+		sw7: sw_7 {
+			gpios = <&gpiob 2 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Button 7"; 
+		};
+		sw8: sw_8 {
+			gpios = <&gpiob 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Button 8"; 
+		};  
+	};
+
+	aliases {
+		sw0  = &sw8;
+		sw1  = &sw1;
+		sw2  = &sw2;
+		sw3  = &sw3;
+		sw4  = &sw4;
+		sw5  = &sw5;
+		sw6  = &sw6;
+		sw7  = &sw7;
+		sw8  = &sw8;
+		led0 = &ld8;
+		led1 = &ld1;
+		led2 = &ld2;
+		led3 = &ld3;
+		led4 = &ld4;
+		led5 = &ld5;
+		led6 = &ld6;
+		led7 = &ld7;
+		led8 = &ld8;
+	};
+
+	/* MIDI1.0 Serial Configuration - Moved to USART2 (ST-Link VCOM) */
+	midi0: midi0 {
+		status = "okay";
+		compatible = "midi1_serial";
+		uart = <&usart2>;
+	};
+
+	/* MIDI1.0 Clock Generator */
+	midi1_clock_cntr_0: midi1_clock_cntr_0 {
+		compatible = "midi1_clock_cntr";
+		counter = <&timers3_counter>;
+		midi1_serial = <&midi0>;
+		status = "okay";
+	};
+
+	/* MIDI1.0 Clock Measurement */
+	midi1_clock_meas_cntr_0: midi1_clock_meas_cntr_0 {
+		compatible = "midi1_clock_meas_cntr";
+		counter = <&timers14_counter>;
+		status = "okay";
+	};
+};
+
+/* MIDI USART configuration on PA2/PA3 (ST-Link Virtual COM Port) */
+&usart2 {
+	status = "okay";
+	current-speed = <31250>;
+};
+
+/* Enable hardware timers as counters for MIDI timing */
+&timers3 {
+	status = "okay";
+	st,prescaler = <1000>;
+	timers3_counter: counter {
+		status = "okay";
+	};
+};
+
+&timers14 {
+	status = "okay";
+	st,prescaler = <1000>;
+	timers14_counter: counter {
+		status = "okay";
+	};
+};

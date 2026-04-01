@@ -1,0 +1,49 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * @file nrf5340dk_nrf5340_cpuapp.overlay
+ * @brief Overlay for MIDI 1.0 Hybrid Test on nRF5340 DK
+ * 
+ * MIDI Serial: UART1 (Standard Arduino Header D0/D1)
+ * MIDI Clock: TIMER0
+ * MIDI Measurement: TIMER1
+ */
+
+&uart1 {
+	status = "okay";
+	current-speed = <31250>;
+	pinctrl-0 = <&uart1_default>;
+	pinctrl-1 = <&uart1_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&timer0 {
+	status = "okay";
+};
+
+&timer1 {
+	status = "okay";
+};
+
+/ {
+	midi0: midi0 {
+		status = "okay";
+		compatible = "midi1_serial";
+		uart = <&uart1>;
+	};
+
+	midi1_clock_cntr_0: midi1_clock_cntr_0 {
+		compatible = "midi1_clock_cntr";
+		counter = <&timer0>;
+		midi1_serial = <&midi0>;
+		status = "okay";
+	};
+
+	midi1_clock_meas_cntr_0: midi1_clock_meas_cntr_0 {
+		compatible = "midi1_clock_meas_cntr";
+		counter = <&timer1>;
+		status = "okay";
+	};
+};

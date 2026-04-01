@@ -1,0 +1,50 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * @file frdm_mcxw71.overlay
+ * @brief Overlay for MIDI 1.0 Hybrid Test on FRDM-MCXW71
+ * 
+ * MIDI Serial: LPUART0 (Arduino Header D0/D1)
+ * MIDI Clock: LPIT0 Channel 0
+ * MIDI Measurement: LPIT0 Channel 1
+ */
+
+&lpuart0 {
+	status = "okay";
+	current-speed = <31250>;
+};
+
+&lpit0 {
+	status = "okay";
+};
+
+&lpit1_channel0 {
+	status = "okay";
+};
+
+&lpit1_channel1 {
+	status = "okay";
+};
+
+/ {
+	midi0: midi0 {
+		status = "okay";
+		compatible = "midi1_serial";
+		uart = <&lpuart0>;
+	};
+
+	midi1_clock_cntr_0: midi1_clock_cntr_0 {
+		compatible = "midi1_clock_cntr";
+		counter = <&lpit1_channel0>;
+		midi1_serial = <&midi0>;
+		status = "okay";
+	};
+
+	midi1_clock_meas_cntr_0: midi1_clock_meas_cntr_0 {
+		compatible = "midi1_clock_meas_cntr";
+		counter = <&lpit1_channel1>;
+		status = "okay";
+	};
+};
