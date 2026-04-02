@@ -105,6 +105,58 @@ Example for defining a MIDI serial instance in your Devicetree overlay:
        status = "okay";
    };
 
+Basic Usage Examples
+********************
+
+Here are some basic examples demonstrating how to use the drivers in your code.
+
+**1. Sending a MIDI Note (Serial Driver)**
+
+.. code-block:: c
+
+   #include <zephyr/device.h>
+   #include <zephyr/drivers/midi/midi1_serial.h>
+
+   int main(void) {
+       const struct device *midi_dev = DEVICE_DT_GET(DT_NODELABEL(midi_serial_0));
+       if (!device_is_ready(midi_dev)) {
+           return -ENODEV;
+       }
+       const struct midi1_serial_api *mid = midi_dev->api;
+
+       /* Send Note On: Channel 0, Note 60 (Middle C), Velocity 100 */
+       mid->note_on(midi_dev, 0, 60, 100);
+
+       /* ... wait ... */
+
+       /* Send Note Off: Channel 0, Note 60, Velocity 0 */
+       mid->note_off(midi_dev, 0, 60, 0);
+
+       return 0;
+   }
+
+
+**2. Generating a MIDI Clock**
+
+.. code-block:: c
+
+   #include <zephyr/device.h>
+   #include <zephyr/drivers/midi/midi1_clock_cntr.h>
+
+   int main(void) {
+       const struct device *midi_clock = DEVICE_DT_GET_ANY(midi1_clock_cntr);
+       if (!device_is_ready(midi_clock)) {
+           return -ENODEV;
+       }
+       const struct midi1_clock_cntr_api *clk = midi_clock->api;
+
+       /* Generate a 24 PPQN MIDI clock at 120.00 BPM */
+       uint16_t target_bpm = 12000;
+       clk->gen(midi_clock, target_bpm);
+
+       return 0;
+   }
+
 License
 *******
 
