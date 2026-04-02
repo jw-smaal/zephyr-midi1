@@ -21,10 +21,16 @@ static uint8_t active_notes[MAX_NOTES];
 static int num_active_notes = 0;
 static int current_note_idx = 0;
 
+/* Mutex to protect active_notes, num_active_notes, current_note_idx */
+K_MUTEX_DEFINE(arp_mutex);
+
 static const struct device *midi_serial;
 static const struct midi1_serial_api *mid;
 static const struct device *midi_clock;
 static const struct midi1_clock_cntr_api *clk;
+
+/* Semaphore to signal that main has finished initialization */
+K_SEM_DEFINE(init_sem, 0, 1);
 
 static int clock_pulses = 0;
 static uint8_t playing_note = 255;
@@ -33,6 +39,8 @@ static struct k_work arp_work;
 void arp_work_handler(struct k_work *work)
 {
 	/* Simple arpeggiator logic on 16th notes */
+	k_mutex_lock(&arp_mutex, K_FOREVER);
+
 	if (num_active_notes > 0) {
 		if (playing_note != 255) {
 			mid->note_off(midi_serial, MY_MIDI1_CHAN, playing_note, 0);
@@ -51,6 +59,8 @@ void arp_work_handler(struct k_work *work)
 			playing_note = 255;
 		}
 	}
+
+	k_mutex_unlock(&arp_mutex);
 }
 
 void clock_tick_callback(void)
@@ -66,6 +76,7 @@ void clock_tick_callback(void)
 
 void note_on_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 {
+	k_mutex_lock(&arp_mutex, K_FOREVER);
 	if (velocity == 0) {
 		/* Some controllers send Note On with 0 velocity for Note Off */
 		for (int i = 0; i < num_active_notes; i++) {
@@ -82,10 +93,12 @@ void note_on_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 			active_notes[num_active_notes++] = note;
 		}
 	}
+	k_mutex_unlock(&arp_mutex);
 }
 
 void note_off_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 {
+	k_mutex_lock(&arp_mutex, K_FOREVER);
 	for (int i = 0; i < num_active_notes; i++) {
 		if (active_notes[i] == note) {
 			for (int j = i; j < num_active_notes - 1; j++) {
@@ -95,10 +108,14 @@ void note_off_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 			break;
 		}
 	}
+	k_mutex_unlock(&arp_mutex);
 }
 
 void midi1_serial_receive_thread(void)
 {
+	/* Wait for main() to initialize globals */
+	k_sem_take(&init_sem, K_FOREVER);
+
 	if (!device_is_ready(midi_serial)) {
 		LOG_ERR("receive_thread Serial MIDI1 device not ready");
 		return;
@@ -134,6 +151,9 @@ int main(void)
 		return -ENODEV;
 	}
 	clk = midi_clock->api;
+
+	/* Signal the receive thread that it can now safely use the mid api */
+	k_sem_give(&init_sem);
 
 	k_work_init(&arp_work, arp_work_handler);
 
