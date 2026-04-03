@@ -124,13 +124,13 @@ Here are some basic examples demonstrating how to use the drivers in your code.
        }
        const struct midi1_serial_api *mid = midi_dev->api;
 
-       /* Send Note On: Channel 0, Note 60 (Middle C), Velocity 100 */
-       mid->note_on(midi_dev, 0, 60, 100);
+       /* Send Note On: Channel 1, Note 60 (Middle C), Velocity 100 */
+       mid->note_on(midi_dev, CH1, 60, 100);
 
        /* ... wait ... */
 
-       /* Send Note Off: Channel 0, Note 60, Velocity 0 */
-       mid->note_off(midi_dev, 0, 60, 0);
+       /* Send Note Off: Channel 1, Note 60, Velocity 0 */
+       mid->note_off(midi_dev, CH1, 60, 0);
 
        return 0;
    }
