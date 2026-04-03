@@ -9,7 +9,7 @@
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @updated 20260403
  *
- * Plays counter-point arpeggios. 
+ * Plays counter-point arpeggios.
  * - SW2: Toggles Latch (Red LED on when Latch active)
  * - Blue LED: Flashes at the current tempo (every quarter note).
  */
@@ -26,13 +26,13 @@
 
 LOG_MODULE_REGISTER(midi1_octave_arp_sample, LOG_LEVEL_INF);
 
-#define TARGET_BPM CONFIG_MIDI1_ARP_TARGET_BPM
+#define TARGET_BPM    CONFIG_MIDI1_ARP_TARGET_BPM
 #define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1)
-#define MAX_NOTES CONFIG_MIDI1_ARP_NUMBER_OF_NOTES
+#define MAX_NOTES     CONFIG_MIDI1_ARP_NUMBER_OF_NOTES
 
 /* LED/Button configuration */
-static const struct gpio_dt_spec latch_led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);  /* Red */
-static const struct gpio_dt_spec tempo_led = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios);  /* Blue */
+static const struct gpio_dt_spec latch_led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios); /* Red */
+static const struct gpio_dt_spec tempo_led = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios); /* Blue */
 static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(DT_ALIAS(sw0), gpios);     /* SW2 */
 static struct gpio_callback button_cb_data;
 
@@ -86,8 +86,8 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t
 	k_mutex_lock(&arp_mutex, K_FOREVER);
 	latch_enabled = !latch_enabled;
 	gpio_pin_set_dt(&latch_led, latch_enabled);
-	
-	/* 
+
+	/*
 	 * Fix: If Latch is turned OFF and no physical keys are held,
 	 * clear the arpeggio immediately.
 	 */
@@ -159,7 +159,7 @@ void clock_tick_callback(void)
 void note_on_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 {
 	k_mutex_lock(&arp_mutex, K_FOREVER);
-	
+
 	if (velocity == 0) {
 		goto note_off_logic;
 	}
@@ -206,7 +206,9 @@ void note_off_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 void midi1_serial_receive_thread(void)
 {
 	k_sem_take(&init_sem, K_FOREVER);
-	if (!device_is_ready(midi_serial)) return;
+	if (!device_is_ready(midi_serial)) {
+		return;
+	}
 
 	struct midi1_serial_callbacks my_cb = {
 		.note_on = note_on_handler,
@@ -219,13 +221,14 @@ void midi1_serial_receive_thread(void)
 	}
 }
 
-K_THREAD_DEFINE(midi1_serial_receive_tid, 1024,
-		midi1_serial_receive_thread, NULL, NULL, NULL, 5, 0, 0);
+K_THREAD_DEFINE(midi1_serial_receive_tid, 1024, midi1_serial_receive_thread, NULL, NULL, NULL, 5, 0,
+		0);
 
 int main(void)
 {
 	/* 1. Init GPIO */
-	if (!gpio_is_ready_dt(&button) || !gpio_is_ready_dt(&latch_led) || !gpio_is_ready_dt(&tempo_led)) {
+	if (!gpio_is_ready_dt(&button) || !gpio_is_ready_dt(&latch_led) ||
+	    !gpio_is_ready_dt(&tempo_led)) {
 		return -ENODEV;
 	}
 	gpio_pin_configure_dt(&button, GPIO_INPUT);
@@ -239,9 +242,13 @@ int main(void)
 	/* 2. Init MIDI */
 	midi_serial = DEVICE_DT_GET(DT_NODELABEL(midi1));
 	midi_clock = DEVICE_DT_GET_ANY(midi1_clock_cntr);
-	if (!device_is_ready(midi_serial)) return -ENODEV;
+	if (!device_is_ready(midi_serial)) {
+		return -ENODEV;
+	}
 	mid = midi_serial->api;
-	if (midi_clock == NULL || !device_is_ready(midi_clock)) return -ENODEV;
+	if (midi_clock == NULL || !device_is_ready(midi_clock)) {
+		return -ENODEV;
+	}
 	clk = midi_clock->api;
 
 	k_sem_give(&init_sem);

@@ -30,8 +30,7 @@ LOG_MODULE_REGISTER(midi1_hybrid_test, LOG_LEVEL_INF);
 static const uint8_t melody[] = {60, 62, 64, 65, 67, 69, 71, 72};
 
 /* Minus -1 because MIDI channel 1 = 0 */
-#define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1) 
-
+#define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1)
 
 int main(void)
 {
@@ -52,14 +51,14 @@ int main(void)
 	sbpm_to_str(TARGET_BPM, bpm_str, sizeof(bpm_str));
 	LOG_INF("Starting Hybrid MIDI Test: Clock at %s BPM", bpm_str);
 
-	/* 
+	/*
 	 * 1. Start the hardware-timed MIDI Clock.
 	 * This uses the 'midi1_serial_timingclock' inside the driver's
 	 * internal Timer ISR, which bypasses the software buffer.
 	 */
 	midi1_clock_cntr_gen(midi_clock, TARGET_BPM);
 
-	/* 
+	/*
 	 * 2. Start looping through MIDI messages.
 	 * These are buffered and sent via interrupts, ensuring the CPU
 	 * is free to handle the timing-critical clock pulses.
@@ -69,9 +68,7 @@ int main(void)
 	while (1) {
 		/* CC sweep (simulating continuous controller data) */
 		for (uint8_t i = 0; i < 127; i++) {
-			midi1_serial_control_change(midi_serial, 
-						    MY_MIDI1_CHAN, 
-						    CTL_MSB_MODWHEEL, 
+			midi1_serial_control_change(midi_serial, MY_MIDI1_CHAN, CTL_MSB_MODWHEEL,
 						    i);
 			k_sleep(K_MSEC(10));
 		}

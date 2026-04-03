@@ -10,7 +10,7 @@
  * @updated 20260403
  *
  * This sample implements "Phasing" by running two layers at slightly
- * different clock intervals. The base layer is steady, while the upper 
+ * different clock intervals. The base layer is steady, while the upper
  * octave layer "drifts" very slowly, creating a shifting rhythmic pattern.
  */
 
@@ -26,25 +26,25 @@
 
 LOG_MODULE_REGISTER(midi1_arp_phase_sample, LOG_LEVEL_INF);
 
-#define TARGET_BPM CONFIG_MIDI1_ARP_TARGET_BPM
+#define TARGET_BPM    CONFIG_MIDI1_ARP_TARGET_BPM
 #define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1)
-#define MAX_NOTES CONFIG_MIDI1_ARP_NUMBER_OF_NOTES
+#define MAX_NOTES     CONFIG_MIDI1_ARP_NUMBER_OF_NOTES
 
 /* Timing configuration */
 #define BASE_INTERVAL CONFIG_MIDI1_ARP_TIMING_INTERVAL
 
-/* 
- * The Phasing Drift: 
- * Every 'DRIFT_CYCLE' notes played, the high octave will wait 
+/*
+ * The Phasing Drift:
+ * Every 'DRIFT_CYCLE' notes played, the high octave will wait
  * 1 extra pulse. This causes the layers to gradually drift apart.
  */
 #define DRIFT_CYCLE 8
 
 /* LEDs/Button */
-static const struct gpio_dt_spec latch_led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);  /* Red */
-static const struct gpio_dt_spec phase_led = GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios);  /* Green */
-static const struct gpio_dt_spec tempo_led = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios);  /* Blue */
-static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(DT_ALIAS(sw0), gpios);      /* SW2 */
+static const struct gpio_dt_spec latch_led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);   /* Red */
+static const struct gpio_dt_spec phase_led = GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios);   /* Green */
+static const struct gpio_dt_spec tempo_led = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios);   /* Blue */
+static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(DT_ALIAS(sw0), gpios);       /* SW2 */
 static const struct gpio_dt_spec phase_button = GPIO_DT_SPEC_GET(DT_ALIAS(sw1), gpios); /* SW3 */
 static struct gpio_callback button_cb_data;
 static struct gpio_callback phase_button_cb_data;
@@ -101,7 +101,7 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t
 {
 	k_mutex_lock(&arp_mutex, K_FOREVER);
 	latch_enabled = !latch_enabled;
-	/* 
+	/*
 	 * Red LED (latch_led) is active-low on this board.
 	 * Set to HIGH (1) to turn OFF when latch is disabled.
 	 */
@@ -117,7 +117,7 @@ void phase_button_pressed(const struct device *dev, struct gpio_callback *cb, ui
 	k_mutex_lock(&arp_mutex, K_FOREVER);
 	phasing_enabled = !phasing_enabled;
 	gpio_pin_set_dt(&phase_led, phasing_enabled);
-	
+
 	if (!phasing_enabled) {
 		/* Snap back into phase */
 		high_trigger_count = 0;
@@ -130,7 +130,7 @@ void phase_button_pressed(const struct device *dev, struct gpio_callback *cb, ui
 			}
 		}
 	}
-	
+
 	k_mutex_unlock(&arp_mutex);
 }
 
@@ -139,7 +139,9 @@ void base_on_handler(struct k_work *work)
 	k_mutex_lock(&arp_mutex, K_FOREVER);
 	if (num_active_notes > 0) {
 		mid->note_off(midi_serial, MY_MIDI1_CHAN, base_pitch, 0);
-		if (++base_idx >= num_active_notes) base_idx = 0;
+		if (++base_idx >= num_active_notes) {
+			base_idx = 0;
+		}
 		base_pitch = notes[base_idx].note;
 		mid->note_on(midi_serial, MY_MIDI1_CHAN, base_pitch, notes[base_idx].velocity);
 		arp_running = true;
@@ -154,7 +156,9 @@ void high_on_handler(struct k_work *work)
 	k_mutex_lock(&arp_mutex, K_FOREVER);
 	if (num_active_notes > 0) {
 		mid->note_off(midi_serial, MY_MIDI1_CHAN, high_pitch, 0);
-		if (--high_idx < 0) high_idx = num_active_notes - 1;
+		if (--high_idx < 0) {
+			high_idx = num_active_notes - 1;
+		}
 		int pitch_calc = notes[high_idx].note + 12;
 		high_pitch = (pitch_calc <= 127) ? (uint8_t)pitch_calc : 127;
 		mid->note_on(midi_serial, MY_MIDI1_CHAN, high_pitch, notes[high_idx].velocity);
@@ -188,11 +192,11 @@ void clock_tick_callback(void)
 
 	if (high_clock >= current_high_interval) {
 		high_clock = 0;
-		
+
 		if (phasing_enabled) {
 			high_lag_pending = false; /* Reset after the lag is applied */
 		}
-		
+
 		k_work_submit(&high_on_work);
 
 		/* Schedule next drift */
@@ -236,7 +240,9 @@ void note_on_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 	return;
 
 note_off_logic:
-	if (physical_keys_count > 0) physical_keys_count--;
+	if (physical_keys_count > 0) {
+		physical_keys_count--;
+	}
 	for (int i = 0; i < num_active_notes; i++) {
 		if (notes[i].note == note) {
 			if (!latch_enabled) {
@@ -259,26 +265,35 @@ void note_off_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 void midi1_serial_receive_thread(void)
 {
 	k_sem_take(&init_sem, K_FOREVER);
-	if (!device_is_ready(midi_serial)) return;
-	struct midi1_serial_callbacks my_cb = {.note_on = note_on_handler, .note_off = note_off_handler};
+	if (!device_is_ready(midi_serial)) {
+		return;
+	}
+	struct midi1_serial_callbacks my_cb = {.note_on = note_on_handler,
+					       .note_off = note_off_handler};
 	mid->register_callbacks(midi_serial, &my_cb);
-	while (1) mid->receiveparser(midi_serial);
+	while (1) {
+		mid->receiveparser(midi_serial);
+	}
 }
 
-K_THREAD_DEFINE(midi1_serial_receive_tid, 1024, midi1_serial_receive_thread, NULL, NULL, NULL, 5, 0, 0);
+K_THREAD_DEFINE(midi1_serial_receive_tid, 1024, midi1_serial_receive_thread, NULL, NULL, NULL, 5, 0,
+		0);
 
 int main(void)
 {
-	if (!gpio_is_ready_dt(&button) || !gpio_is_ready_dt(&latch_led) || !gpio_is_ready_dt(&tempo_led) ||
-	    !gpio_is_ready_dt(&phase_button) || !gpio_is_ready_dt(&phase_led)) return -ENODEV;
-	
+	if (!gpio_is_ready_dt(&button) || !gpio_is_ready_dt(&latch_led) ||
+	    !gpio_is_ready_dt(&tempo_led) || !gpio_is_ready_dt(&phase_button) ||
+	    !gpio_is_ready_dt(&phase_led)) {
+		return -ENODEV;
+	}
+
 	gpio_pin_configure_dt(&button, GPIO_INPUT);
 	gpio_pin_configure_dt(&phase_button, GPIO_INPUT);
-	
+
 	gpio_pin_configure_dt(&latch_led, GPIO_OUTPUT_ACTIVE); /* High = OFF */
 	gpio_pin_configure_dt(&tempo_led, GPIO_OUTPUT_INACTIVE);
 	gpio_pin_configure_dt(&phase_led, GPIO_OUTPUT_INACTIVE);
-	
+
 	gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_TO_ACTIVE);
 	gpio_init_callback(&button_cb_data, button_pressed, BIT(button.pin));
 	gpio_add_callback(button.port, &button_cb_data);
@@ -289,9 +304,13 @@ int main(void)
 
 	midi_serial = DEVICE_DT_GET(DT_NODELABEL(midi1));
 	midi_clock_dev = DEVICE_DT_GET_ANY(midi1_clock_cntr);
-	if (!device_is_ready(midi_serial)) return -ENODEV;
+	if (!device_is_ready(midi_serial)) {
+		return -ENODEV;
+	}
 	mid = midi_serial->api;
-	if (midi_clock_dev == NULL || !device_is_ready(midi_clock_dev)) return -ENODEV;
+	if (midi_clock_dev == NULL || !device_is_ready(midi_clock_dev)) {
+		return -ENODEV;
+	}
 	clk = midi_clock_dev->api;
 
 	k_sem_give(&init_sem);
@@ -304,6 +323,8 @@ int main(void)
 	clk->register_callback(midi_clock_dev, clock_tick_callback);
 	clk->gen(midi_clock_dev, TARGET_BPM);
 
-	while (1) k_sleep(K_SECONDS(2));
+	while (1) {
+		k_sleep(K_SECONDS(2));
+	}
 	return 0;
 }
