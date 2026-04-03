@@ -6,4 +6,5 @@ project(midi1_arp)
 
 target_sources(app PRIVATE
     src/main.c
+    src/note.c 
 )

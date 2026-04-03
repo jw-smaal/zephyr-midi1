@@ -9,14 +9,21 @@
 #include <zephyr/drivers/midi/midi1_clock_cntr.h>
 #include <zephyr/logging/log.h>
 
+/* In order to print out the note names */
+#include "note.h"
+
 LOG_MODULE_REGISTER(midi1_arp_sample, LOG_LEVEL_INF);
 
 /* 120.00 BPM scaled by 100 */
-#define TARGET_BPM 12000
+/* #define TARGET_BPM 12000 */
+#define TARGET_BPM CONFIG_MIDI1_ARP_TARGET_BPM
 
+/* Defined in the driver Kconfig use menuconfig to change */
 #define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1)
 
-#define MAX_NOTES 10
+/* #define MAX_NOTES 10 */
+#define MAX_NOTES CONFIG_MIDI1_ARP_NUMBER_OF_NOTES
+
 static uint8_t active_notes[MAX_NOTES];
 static int num_active_notes = 0;
 static int current_note_idx = 0;
@@ -63,26 +70,33 @@ void arp_work_handler(struct k_work *work)
 	k_mutex_unlock(&arp_mutex);
 }
 
+/* This is called from the ISR */
 void clock_tick_callback(void)
 {
 	clock_pulses++;
-	/* Trigger every 6th pulse (16th notes: 24 PPQN / 4 = 6) */
-	if (clock_pulses >= 6) {
+	/* E.g. Trigger every 6th pulse (16th notes: 24 PPQN / 4 = 6) */
+	if (clock_pulses >= CONFIG_MIDI1_ARP_TIMING_INTERVAL) {
 		clock_pulses = 0;
-		/* Submit work item to avoid blocking in callback context */
+		/*
+		 * Submit work item to avoid blocking in callback context
+		 */
 		k_work_submit(&arp_work);
 	}
 }
 
+/* This is called from the receiveparser */
 void note_on_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 {
 	k_mutex_lock(&arp_mutex, K_FOREVER);
 	if (velocity == 0) {
-		/* Some controllers send Note On with 0 velocity for Note Off */
+		/*
+		 * Some controllers send Note On with 0 velocity
+		 * for Note Off
+		 */
 		for (int i = 0; i < num_active_notes; i++) {
 			if (active_notes[i] == note) {
 				for (int j = i; j < num_active_notes - 1; j++) {
-					active_notes[j] = active_notes[j+1];
+					active_notes[j] = active_notes[j + 1];
 				}
 				num_active_notes--;
 				break;
@@ -96,13 +110,14 @@ void note_on_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 	k_mutex_unlock(&arp_mutex);
 }
 
+/* This is called from the receiveparser */
 void note_off_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 {
 	k_mutex_lock(&arp_mutex, K_FOREVER);
 	for (int i = 0; i < num_active_notes; i++) {
 		if (active_notes[i] == note) {
 			for (int j = i; j < num_active_notes - 1; j++) {
-				active_notes[j] = active_notes[j+1];
+				active_notes[j] = active_notes[j + 1];
 			}
 			num_active_notes--;
 			break;
@@ -132,16 +147,16 @@ void midi1_serial_receive_thread(void)
 	}
 }
 
-K_THREAD_DEFINE(midi1_serial_receive_tid, 1024,
-                midi1_serial_receive_thread, NULL, NULL, NULL, 5, 0, 0);
+K_THREAD_DEFINE(midi1_serial_receive_tid, 1024, midi1_serial_receive_thread, NULL, NULL, NULL, 5, 0,
+		0);
 
 int main(void)
 {
-	midi_serial = DEVICE_DT_GET(DT_NODELABEL(midi0));
+	midi_serial = DEVICE_DT_GET(DT_NODELABEL(midi1));
 	midi_clock = DEVICE_DT_GET_ANY(midi1_clock_cntr);
 
 	if (!device_is_ready(midi_serial)) {
-		LOG_ERR("Serial MIDI device midi0 not ready");
+		LOG_ERR("Serial MIDI device midi1 not ready");
 		return -ENODEV;
 	}
 	mid = midi_serial->api;
@@ -152,21 +167,27 @@ int main(void)
 	}
 	clk = midi_clock->api;
 
-	/* Signal the receive thread that it can now safely use the mid api */
+	/* the receive thread can now safely use the mid api */
 	k_sem_give(&init_sem);
-
 	k_work_init(&arp_work, arp_work_handler);
-
 	LOG_INF("Starting Arpeggiator Demo");
 
-	/* Register the clock callback for the internal clock generation */
+	/* internal clock generation i.e. we also want get notified */
 	clk->register_callback(midi_clock, clock_tick_callback);
 
 	/* Start the clock generation */
 	clk->gen(midi_clock, TARGET_BPM);
 
 	while (1) {
-		LOG_INF("Arpeggiator running");
+		if (num_active_notes > 0) {
+			LOG_INF("Arpeggiator running.");
+		} else {
+			LOG_INF("Arpeggiator stopped.");
+		}
+		/* Display the current active notes */
+		for (uint8_t i = 0; i < num_active_notes; i++) {
+			LOG_INF("[%d]:%s, ", i, noteToTextWithOctave(active_notes[i], false));
+		}
 		k_sleep(K_SECONDS(5));
 	}
 
