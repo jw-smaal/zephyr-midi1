@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+sample:
+  name: MIDI 1.0 Super Arpeggiator Demo
+tests:
+  sample.midi1_super_arp:
+    platform_allow:
+      - frdm_k64f
+      - frdm_mcxc242
+    harness: console
+    harness_config:
+      type: one_line
+      regex:
+        - "Arpeggiator running"

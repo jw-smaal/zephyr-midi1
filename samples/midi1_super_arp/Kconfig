@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+
+menu "MIDI 1.0 ARP sample"
+config MIDI1_ARP_NUMBER_OF_NOTES
+    int "ARP number of NOTES to support"
+    default 10
+    range 1 32
+    
+config MIDI1_ARP_TIMING_INTERVAL
+    int "TIMING_INTERVAL"
+    default 6
+    range 1 128
+    
+config MIDI1_ARP_TARGET_BPM
+    int "ARP beats per minute (BPM) * 100 (i.e. 120 bpm is 12000)"
+    default 10000
+    range 1 60000
+endmenu
+
+source "Kconfig.zephyr"

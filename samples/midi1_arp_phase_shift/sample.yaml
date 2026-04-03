@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+sample:
+  name: MIDI 1.0 Phasing Arpeggiator Demo
+tests:
+  sample.midi1_arp_phase_shift:
+    platform_allow:
+      - frdm_k64f
+      - frdm_mcxc242
+    harness: console
+    harness_config:
+      type: one_line
+      regex:
+        - "Arpeggiator running"

@@ -1,0 +1,57 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * @file frdm_k64f.overlay
+ * @brief overlay for this board from 2024
+ * @note
+ *
+ * Using the MCXA156 the mikroBUS socket is used for lpuart1.
+ *
+ * @author Jan-Willem Smaal <usenet@gispen.org>
+ * @date 20260102
+ */
+
+/*
+ * Classic MIDI1.0 over DIN5 plug.
+ * On the MCXA156 the mikroBUS socket J1 is on LPUART1
+ */
+&lpuart1 {
+	status = "okay";
+	/* Set it to the MIDI baud rate */
+	current-speed = <31250>;
+};
+
+/* Enable two hardware CTIMERs for the clock generation and measurement */
+&ctimer0 {
+	status = "okay";
+};
+
+&ctimer1 {
+	status = "okay";
+};
+
+/ {
+	/* Existing UART mapping */
+	midi0: midi0 {
+		status = "okay";
+		compatible = "midi1_serial";
+		uart = <&lpuart1>;
+	};
+
+	/* 1. MIDI Clock Generator Instance */
+	midi1_clock_cntr_0: midi1_clock_cntr_0 {
+		compatible = "midi1_clock_cntr";
+		counter = <&ctimer0>;      /* Assign CTIMER0 to generate clock */
+		midi1_serial = <&midi0>;   /* Link it to the UART TX */
+		status = "okay";
+	};
+
+	/* 2. MIDI Clock Measurement Instance */
+	midi1_clock_meas_cntr_0: midi1_clock_meas_cntr_0 {
+		compatible = "midi1_clock_meas_cntr";
+		counter = <&ctimer1>;      /* Assign CTIMER1 to measure incoming clock */
+		status = "okay";
+	};
+};
