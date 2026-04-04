@@ -14,6 +14,7 @@
  */
 
 #include <zephyr/kernel.h>
+#include <stdlib.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/midi/midi1.h>
 #include <zephyr/drivers/midi/midi1_serial.h>
@@ -23,6 +24,7 @@
 
 #include "note.h"
 #include "arp.h"
+#include "tempo.h"
 
 LOG_MODULE_REGISTER(midi1_arp_phase_app, LOG_LEVEL_INF);
 
@@ -53,10 +55,12 @@ static const struct midi1_clock_cntr_api *clk;
 
 /* State & Synchronisation */
 static struct arp_ctx arp;
+static struct tempo_ctx tempo;
 K_SEM_DEFINE(init_sem, 0, 1);
 
 static struct k_work arp_step_work;
 static struct k_work tempo_work;
+static struct k_work_delayable bpm_update_work;
 
 /**
  * @brief Work handler for the tempo LED flash.
@@ -173,6 +177,25 @@ void note_off_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 }
 
 /**
+ * @brief MIDI Control Change Handler
+ */
+void control_change_handler(uint8_t channel, uint8_t controller, uint8_t value)
+{
+	switch (controller) {
+	case CTL_MSB_MODWHEEL:
+		break;
+	case CTL_SUSTAIN:
+		arp_set_latch(&arp, !arp.latch_enabled);
+		/* Red LED is active-low: 0 = ON, 1 = OFF */
+		gpio_pin_set_dt(&latch_led, !arp.latch_enabled);
+		LOG_INF("Sustain Pedal Latch: %s", arp.latch_enabled ? "ON" : "OFF");
+		break;
+	default:
+		break;
+	}
+}
+
+/**
  * @brief Background thread for MIDI parsing.
  */
 void midi_rx_thread(void)
@@ -182,6 +205,7 @@ void midi_rx_thread(void)
 	struct midi1_serial_callbacks cb = {
 		.note_on = note_on_handler,
 		.note_off = note_off_handler,
+		.control_change = control_change_handler,
 	};
 	mid->register_callbacks(midi_serial, &cb);
 
@@ -190,10 +214,23 @@ void midi_rx_thread(void)
 	}
 }
 
-K_THREAD_DEFINE(midi_rx_tid, 1024, midi_rx_thread, NULL, NULL, NULL, 5, 0, 0);
+K_THREAD_DEFINE(midi_rx_tid, 512, midi_rx_thread, NULL, NULL, NULL, 5, 0, 0);
+
+/**
+ * @brief Samples the ADC and updates the arpeggiator BPM.
+ */
+void bpm_update_work_handler(struct k_work *work)
+{
+	tempo_update(&tempo);
+
+	/* Reschedule next sample in 300ms */
+	k_work_reschedule(&bpm_update_work, K_MSEC(300));
+}
 
 int main(void)
 {
+	int err;
+
 	/* 1. Hardware Setup */
 	if (!gpio_is_ready_dt(&button) || !gpio_is_ready_dt(&latch_led) ||
 	    !gpio_is_ready_dt(&tempo_led) || !gpio_is_ready_dt(&mode_button) ||
@@ -225,15 +262,27 @@ int main(void)
 
 	/* 2. Logic Initialization */
 	arp_init(&arp, CONFIG_MIDI1_ARP_TIMING_INTERVAL, DRIFT_CYCLE);
+
+	/* Initialize Tempo module (ADC 0 from zephyr,user) */
+	err = tempo_init(&tempo, midi_clock_dev, 0);
+	if (err < 0) {
+		return err;
+	}
+
 	k_work_init(&arp_step_work, arp_step_handler);
 	k_work_init(&tempo_work, tempo_work_handler);
+	k_work_init_delayable(&bpm_update_work, bpm_update_work_handler);
 
 	k_sem_give(&init_sem);
 
 	LOG_INF("Phasing Arpeggiator (Modular) Started.");
 
 	clk->register_callback(midi_clock_dev, clock_tick_callback);
+	/* Initial clock start */
 	clk->gen(midi_clock_dev, TARGET_BPM);
+
+	/* Start periodic ADC sampling */
+	k_work_schedule(&bpm_update_work, K_NO_WAIT);
 
 	while (1) {
 		k_mutex_lock(&arp.lock, K_FOREVER);

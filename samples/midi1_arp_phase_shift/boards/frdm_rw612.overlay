@@ -48,13 +48,18 @@
 	};
 };
 
+#include <zephyr/dt-bindings/adc/nxp,gau-adc.h>
+
 / {
 	aliases {
 		counterch0 = &ctimer0;
 		counterch1 = &ctimer1;
+		led1 = &green_led;
+		led2 = &green_led;
+		sw1 = &user_button_0;
 	};
 	/* MIDI1.0 serial USART driver, set the uart baud to 31250. */
-	midi0: midi0 {
+	midi1: midi1 {
 		status = "okay";
 		compatible = "midi1_serial";
 		uart = <&flexcomm1>;
@@ -64,7 +69,7 @@
 		status = "okay";
 		compatible = "midi1_clock_cntr";
 		counter = <&ctimer0>;
-		midi1_serial = <&midi0>;
+		midi1_serial = <&midi1>;
 	};
 	/* MIDI1.0 clock measurement system using the Zephyr timer */
 	midi1_clock_meas_cntr: midi1_clock_meas_cntr {
@@ -85,6 +90,26 @@
 			protocol = "midi1-up-to-128b";
 			label = "MIDI-IN-OUT";
 		};
+	};
+
+	zephyr,user {
+		io-channels = <&adc0 0>;
+	};
+};
+
+&adc0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_VDD_1";
+		zephyr,vref-mv = <1800>;
+		zephyr,acquisition-time = <0>;
+		zephyr,resolution = <16>;
+		zephyr,input-positive = <GAU_ADC_CH0>;
 	};
 };
 

@@ -8,7 +8,7 @@
  */
 
 / {
-	midi0: midi0 {
+	midi1: midi1 {
 		status = "okay";
 		compatible = "midi1_serial";
 		uart = <&uart3>;
@@ -17,8 +17,30 @@
 	midi1_clock_cntr_0: midi1_clock_cntr_0 {
 		compatible = "midi1_clock_cntr";
 		counter = <&pit0_channel0>;
-		midi1_serial = <&midi0>;
+		midi1_serial = <&midi1>;
 		status = "okay";
+	};
+
+	zephyr,user {
+		io-channels = <&adc0 14>;
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_default>;
+	pinctrl-names = "default";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@e {
+		reg = <14>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_VDD_1";
+		zephyr,vref-mv = <3300>;
+		zephyr,acquisition-time = <0>;
+		zephyr,resolution = <12>;
 	};
 };
 

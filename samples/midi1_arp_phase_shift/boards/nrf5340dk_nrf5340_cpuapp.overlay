@@ -28,7 +28,7 @@
 };
 
 / {
-	midi0: midi0 {
+	midi1: midi1 {
 		status = "okay";
 		compatible = "midi1_serial";
 		uart = <&uart1>;
@@ -37,7 +37,7 @@
 	midi1_clock_cntr_0: midi1_clock_cntr_0 {
 		compatible = "midi1_clock_cntr";
 		counter = <&timer0>;
-		midi1_serial = <&midi0>;
+		midi1_serial = <&midi1>;
 		status = "okay";
 	};
 
@@ -45,5 +45,24 @@
 		compatible = "midi1_clock_meas_cntr";
 		counter = <&timer1>;
 		status = "okay";
+	};
+
+	zephyr,user {
+		io-channels = <&adc 0>;
+	};
+};
+
+&adc {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1_6";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <0>;
+		zephyr,input-positive = <NRF_SAADC_AIN1>;
+		zephyr,resolution = <12>;
 	};
 };

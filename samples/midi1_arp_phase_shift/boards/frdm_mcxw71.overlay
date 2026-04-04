@@ -29,7 +29,13 @@
 };
 
 / {
-	midi0: midi0 {
+	aliases {
+		led1 = &blue_led;
+		led2 = &blue_led;
+		sw1 = &user_button_0;
+	};
+
+	midi1: midi1 {
 		status = "okay";
 		compatible = "midi1_serial";
 		uart = <&lpuart0>;
@@ -38,7 +44,7 @@
 	midi1_clock_cntr_0: midi1_clock_cntr_0 {
 		compatible = "midi1_clock_cntr";
 		counter = <&lpit1_channel0>;
-		midi1_serial = <&midi0>;
+		midi1_serial = <&midi1>;
 		status = "okay";
 	};
 
@@ -46,5 +52,27 @@
 		compatible = "midi1_clock_meas_cntr";
 		counter = <&lpit1_channel1>;
 		status = "okay";
+	};
+
+	zephyr,user {
+		io-channels = <&adc0 6>;
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&pinmux_lpadc0>;
+	pinctrl-names = "default";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@6 {
+		reg = <6>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_VDD_1";
+		zephyr,vref-mv = <3300>;
+		zephyr,acquisition-time = <0>;
+		zephyr,resolution = <12>;
 	};
 };

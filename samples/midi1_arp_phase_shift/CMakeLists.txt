@@ -8,4 +8,5 @@ target_sources(app PRIVATE
     src/main.c
     src/note.c
     src/arp.c
+    src/tempo.c
 )
