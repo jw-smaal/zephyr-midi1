@@ -1,6 +1,8 @@
 Hardware Support
 ################
 
+:Author: Jan-Willem Smaal <usenet@gispen.org>
+
 This directory contains Devicetree overlays for the various boards supported by the Phasing Arpeggiator. Each overlay configures the necessary MIDI UART, Hardware Counters, and ADC inputs for BPM control.
 
 ADC Potentiometer Connections

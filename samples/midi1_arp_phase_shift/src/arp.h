@@ -12,6 +12,8 @@
 /**
  * @file arp.h
  * @brief Modular Arpeggiator Logic for Phasing and Process-based Counter-point
+ *
+ * @author Jan-Willem Smaal <usenet@gispen.org>
  */
 
 #define ARP_MAX_NOTES 16

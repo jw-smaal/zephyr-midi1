@@ -9,4 +9,5 @@ target_sources(app PRIVATE
     src/note.c
     src/arp.c
     src/tempo.c
+    src/display_mgr.c
 )

@@ -11,6 +11,8 @@
 /**
  * @file tempo.h
  * @brief Modular Tempo Controller for ADC-based BPM management.
+ *
+ * @author Jan-Willem Smaal <usenet@gispen.org>
  */
 
 struct tempo_ctx {
@@ -33,7 +35,8 @@ struct tempo_ctx {
  * @param adc_idx The index of the ADC channel in the zephyr,user node.
  * @return 0 on success, negative errno on failure.
  */
-int tempo_init(struct tempo_ctx *ctx, const struct device *clk_dev, uint8_t adc_idx);
+int tempo_init(struct tempo_ctx *ctx, const struct device *clk_dev,
+	       uint8_t adc_idx);
 
 /**
  * @brief Sample the ADC and update the MIDI clock tempo if needed.

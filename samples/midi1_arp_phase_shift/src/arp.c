@@ -2,6 +2,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * @file arp.c
+ * @brief Arpeggiator logic implementation.
+ *
+ * @author Jan-Willem Smaal <usenet@gispen.org>
+ */
+
 #include "arp.h"
 
 void arp_init(struct arp_ctx *ctx, int interval, int drift_cycle)

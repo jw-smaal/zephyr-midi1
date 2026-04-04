@@ -35,6 +35,10 @@
 		/* adjust channel number according to pinmux in board.dts */
 		io-channels = <&adc0 1>;
 	};
+
+	chosen {
+		zephyr,display = &ssd1306;
+	};
 };
 
 &adc0 {
@@ -94,4 +98,38 @@
 
 &pit0_channel0 {
 	status = "okay";
+};
+
+/*
+ * i2c0 does not work due to missing pin control.  i2c1 is the the Arduino
+ * header
+ */
+&i2c1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	ssd1306: ssd1306@3c {
+		status = "okay";
+		compatible = "solomon,ssd1306";
+		reg = <0x3c>;
+		label = "SSD1306";
+		width = <128>;
+		height = <64>;
+		segment-offset = <0>;
+		page-offset = <0>;
+		display-offset = <0>;
+		multiplex-ratio = <63>;
+		/* Had to enable this to mirror the image */
+		com-invdir;
+		/* prechargep = <0x22>; */
+		/* Used for the SH1106 */
+		/* prechargep = <0x1F>; */
+		/* Used for the SSD1306 */
+		prechargep = <0xF1>;
+		/* The next one was required to flip the image */
+		segment-remap;
+		inversion-on;
+		/* Critical part on the SSD1306 don't make this too long */
+		ready-time-ms = <100>;
+	};
 };
