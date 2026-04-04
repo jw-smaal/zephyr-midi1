@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 menu "MIDI 1.0 ARP sample"
+
 config MIDI1_ARP_NUMBER_OF_NOTES
     int "ARP number of NOTES to support"
     default 10
@@ -12,9 +13,30 @@ config MIDI1_ARP_TIMING_INTERVAL
     range 1 128
     
 config MIDI1_ARP_TARGET_BPM
-    int "ARP beats per minute (BPM) * 100 (i.e. 120 bpm is 12000)"
+    int "Default ARP beats per minute (BPM) * 100 (i.e. 120 bpm is 12000)"
     default 10000
     range 1 60000
+
+config MIDI1_ARP_DRIFT_CYCLE
+    int "Number of MIDI clock ticks to drift" 
+    default 8
+    range 1 96
+
+config MIDI1_ARP_TEMPO_MINIMUM 
+    int "Minimum tempo using the ADC pot input default is 30.00 bpm (3000)" 
+    default 3000 
+    range 100 30000
+
+config MIDI1_ARP_TEMPO_MAXIMUM 
+    int "Maximum tempo using the ADC pot input default is 300.00 bpm (30000)" 
+    default 30000 
+    range 100 30000
+
+config MIDI1_ARP_TEMPO_DEADBAND
+    int "The ADC can be noisy don't change the tempo unless it has changed more than this" 
+    default 25
+    range 1 500
+
 endmenu
 
 source "Kconfig.zephyr"

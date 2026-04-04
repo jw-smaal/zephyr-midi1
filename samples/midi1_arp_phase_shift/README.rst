@@ -7,10 +7,10 @@ MIDI 1.0 Phasing Arpeggiator (Experimental)
 
 Overview
 ********
-This is an experimental fork of the Phasing Arpeggiator sample, extending the modular architecture with real-time hardware controls for BPM and a visual dashboard.
+This is a Phasing Arpeggiator sample with real-time hardware controls for BPM and a visual dashboard.
 
 Key Features:
-* **Modular Architecture:** Logic is cleanly separated into ``arp`` (sequencing), ``tempo`` (ADC management), and ``display_mgr`` (OLED interface).
+* **Modular Architecture:** Logic is separated into ``arp`` (sequencing), ``tempo`` (ADC management), and ``display_mgr`` (OLED interface).
 * **ADC BPM Control:** Dynamically adjust the arpeggiator speed from **5.00 to 360.00 BPM** using a 10k Ohm potentiometer connected to pin **A1 (PTE16)**.
 * **OLED Dashboard:** Real-time visualization on an **SSD1306** display, showing:
     * Current arpeggiator Mode and Latch status.

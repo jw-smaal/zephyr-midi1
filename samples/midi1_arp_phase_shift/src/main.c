@@ -26,7 +26,8 @@ LOG_MODULE_REGISTER(midi1_arp_phase_app, LOG_LEVEL_WRN);
 
 #define TARGET_BPM CONFIG_MIDI1_ARP_TARGET_BPM
 #define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1)
-#define DRIFT_CYCLE 8
+/* #define DRIFT_CYCLE 8 */
+#define DRIFT_CYCLE CONFIG_MIDI1_ARP_DRIFT_CYCLE
 
 /* MIDI Clock standard is 24 Pulses Per Quarter Note (PPQN) */
 #define MIDI_CLOCK_PPQN 24

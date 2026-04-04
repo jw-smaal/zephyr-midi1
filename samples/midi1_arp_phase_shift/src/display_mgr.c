@@ -45,7 +45,7 @@ void display_thread(void *p1, void *p2, void *p3)
 		uint8_t base_pitch;
 		uint8_t high_pitch;
 		int num_notes;
-	} last_state = {.mode = 255};
+	} last_state = { .mode = 255 };
 
 	char line1[32], line2[32], line3[32], line4[32];
 	uint8_t font_height;
@@ -58,16 +58,17 @@ void display_thread(void *p1, void *p2, void *p3)
 
 	while (1) {
 		bool changed = false;
-
+		
 		/* --- Step 1: Rapid Snapshot --- */
 		k_mutex_lock(&g_arp->lock, K_FOREVER);
-
-		if (g_arp->mode != last_state.mode || g_arp->latch_enabled != last_state.latch ||
+		
+		if (g_arp->mode != last_state.mode || 
+		    g_arp->latch_enabled != last_state.latch ||
 		    g_tempo->last_bpm != last_state.bpm ||
 		    g_arp->base.playing_pitch != last_state.base_pitch ||
 		    g_arp->high.playing_pitch != last_state.high_pitch ||
 		    g_arp->num_notes != last_state.num_notes) {
-
+			
 			/* Copy state into local snapshot */
 			last_state.mode = g_arp->mode;
 			last_state.latch = g_arp->latch_enabled;
@@ -77,24 +78,18 @@ void display_thread(void *p1, void *p2, void *p3)
 			last_state.num_notes = g_arp->num_notes;
 			changed = true;
 		}
-
+		
 		k_mutex_unlock(&g_arp->lock);
 
 		/* --- Step 2: Render if changed --- */
 		if (changed) {
 			const char *m_str = "SYNC";
-			if (last_state.mode == ARP_MODE_PHASE) {
-				m_str = "PHASE";
-			} else if (last_state.mode == ARP_MODE_PROCESS) {
-				m_str = "PROC";
-			} else if (last_state.mode == ARP_MODE_PHASE_PROCESS) {
-				m_str = "PH+PR";
-			}
+			if (last_state.mode == ARP_MODE_PHASE) m_str = "PHASE";
+			else if (last_state.mode == ARP_MODE_PROCESS) m_str = "PROC";
+			else if (last_state.mode == ARP_MODE_PHASE_PROCESS) m_str = "PH+PR";
 
-			snprintf(line1, sizeof(line1), "M:%s L:%s", m_str,
-				 last_state.latch ? "ON" : "OFF");
-			snprintf(line2, sizeof(line2), "BPM: %d.%02d", last_state.bpm / 100,
-				 last_state.bpm % 100);
+			snprintf(line1, sizeof(line1), "M:%s L:%s", m_str, last_state.latch ? "ON" : "OFF");
+			snprintf(line2, sizeof(line2), "BPM: %d.%02d", last_state.bpm / 100, last_state.bpm % 100);
 
 			if (last_state.num_notes > 0) {
 				snprintf(line3, sizeof(line3), "Notes: %d", last_state.num_notes);
@@ -126,15 +121,16 @@ int display_mgr_init(struct arp_ctx *arp, struct tempo_ctx *tempo)
 			LOG_ERR("Framebuffer initialization failed!");
 			return -ENODEV;
 		}
-
+		
 		cfb_framebuffer_clear(display_dev, true);
 		cfb_print(display_dev, "Arp Modular", 0, 0);
 		cfb_framebuffer_finalize(display_dev);
 
 		/* Start background thread with lowest priority */
 		k_thread_create(&display_thread_data, display_stack,
-				K_THREAD_STACK_SIZEOF(display_stack), display_thread, NULL, NULL,
-				NULL, K_LOWEST_APPLICATION_THREAD_PRIO, 0, K_NO_WAIT);
+				K_THREAD_STACK_SIZEOF(display_stack),
+				display_thread, NULL, NULL, NULL,
+				K_LOWEST_APPLICATION_THREAD_PRIO, 0, K_NO_WAIT);
 		k_thread_name_set(&display_thread_data, "display_mgr");
 	}
 

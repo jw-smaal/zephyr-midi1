@@ -22,9 +22,9 @@ int tempo_init(struct tempo_ctx *ctx, const struct device *clk_dev,
 	int err;
 
 	ctx->midi_clock_dev = clk_dev;
-	ctx->min_bpm = 500;   /* 5.00 BPM */
-	ctx->max_bpm = 36000; /* 360.00 BPM */
-	ctx->deadband = 60;  /* 0.60 BPM */
+	ctx->min_bpm = CONFIG_MIDI1_ARP_TEMPO_MINIMUM;
+	ctx->max_bpm = CONFIG_MIDI1_ARP_TEMPO_MAXIMUM;
+	ctx->deadband = CONFIG_MIDI1_ARP_TEMPO_DEADBAND;
 	ctx->last_bpm = 0;
 
 	/* Setup ADC spec from zephyr,user node */
