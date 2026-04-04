@@ -5,15 +5,20 @@ MIDI 1.0 Arpeggiator Sample
 
 Overview
 ********
-This sample application demonstrates the creation of an Arpeggiator using the MIDI 1.0 drivers.
-It combines clock generation with both input and output processing, serving as a comprehensive demonstration of the library's capabilities.
+This sample application demonstrates a baseline arpeggiator implementation using the MIDI 1.0 drivers. 
+It serves as a simple, elegant starting point for MIDI sequence processing in Zephyr RTOS.
 
-The application generates a MIDI clock using the hardware counter driver. It listens for incoming MIDI notes. When a chord (or multiple notes) is played, it arpeggiates those notes, sending them out sequentially synchronized to the generated MIDI clock.
+Key Features:
+* **Internal Clock Generation:** Uses the hardware counter driver to generate a rock-solid MIDI clock.
+* **Velocity Capture:** Accurately records the velocity of each incoming note and preserves the dynamics in the arpeggiated playback.
+* **16th Note Arpeggiation:** Triggers steps every 6 MIDI pulses (based on standard 24 PPQN).
+* **Robust Note Handling:** Includes logic to handle MIDI "Note On with Velocity 0" as Note Off for compatibility with various controllers.
+* **Thread Safety:** Uses mutexes to safely share note buffers between the MIDI receive thread and the system workqueue.
 
 Requirements
 ************
-* A board with UART configured for MIDI (31250 baud) and a hardware counter (like ``frdm_k64f`` or ``frdm_mcxc242``).
-* A MIDI interface to connect to a synthesizer and a MIDI keyboard.
+* A board with UART configured for MIDI (31250 baud) and a hardware counter (like ``frdm_mcxc242``).
+* A MIDI interface PCB (optocoupler for input, current loop for output).
 
 Building and Running
 ********************
@@ -21,8 +26,6 @@ Build the sample using west:
 
 .. code-block:: bash
 
-   west build -b <your_board> samples/midi1_arp
+   west build -b frdm_mcxc242 modules/lib/midi1/samples/midi1_arp
 
-Replace ``<your_board>`` with your specific board.
-
-Once flashed, connect your MIDI keyboard to the MIDI IN, and a synthesizer to MIDI OUT. Play a chord on the keyboard to hear it arpeggiated on the synthesizer.
+Flash and connect your MIDI hardware. Play a chord to hear it arpeggiated with your original playing dynamics.

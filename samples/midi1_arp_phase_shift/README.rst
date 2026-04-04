@@ -1,19 +1,27 @@
-.. _midi1_arp_sample:
+.. _midi1_arp_phase_shift_sample:
 
-MIDI 1.0 Arpeggiator Sample
-###########################
+MIDI 1.0 Phasing Arpeggiator Sample
+###################################
 
 Overview
 ********
-This sample application demonstrates the creation of an Arpeggiator using the MIDI 1.0 drivers.
-It combines clock generation with both input and output processing, serving as a comprehensive demonstration of the library's capabilities.
+This sample application implements a minimalist-inspired phasing arpeggiator using a clean, modular embedded design. 
+It features evolving rhythmic patterns and independent layer drift.
 
-The application generates a MIDI clock using the hardware counter driver. It listens for incoming MIDI notes. When a chord (or multiple notes) is played, it arpeggiates those notes, sending them out sequentially synchronized to the generated MIDI clock.
+Key Features:
+* **Modular Architecture:** Arpeggiator logic is fully encapsulated in ``arp.c/h``, ensuring a clean separation between musical state and hardware drivers.
+* **Slow Phasing Drift:** An optional mode where the upper octave layer lags behind the master clock by one MIDI pulse every 8 notes, creating a slowly shifting rhythmic phase.
+* **Additive/Subtractive Process Mode:** An evolving sequence mode that builds up notes one-by-one and then tears them down, creating complex and changing harmonic structures.
+* **Mode Selector:** Use the onboard **SW3 button** to cycle through four arpeggiator modes:
+    1. **SYNC:** Steady counter-point.
+    2. **PHASE:** Steady sequence with rhythmic drift.
+    3. **PROCESS:** Evolving sequence without drift.
+    4. **PH+PROC:** Evolving sequence with rhythmic drift.
+* **Condensed Logging:** Provides a clean, single-line console overview of the arpeggiator state and chord transpositions.
 
 Requirements
 ************
-* A board with UART configured for MIDI (31250 baud) and a hardware counter (like ``frdm_k64f`` or ``frdm_mcxc242``).
-* A MIDI interface to connect to a synthesizer and a MIDI keyboard.
+* A board with UART configured for MIDI, a hardware counter, and user-accessible LEDs/Buttons (like ``frdm_mcxc242``).
 
 Building and Running
 ********************
@@ -21,8 +29,6 @@ Build the sample using west:
 
 .. code-block:: bash
 
-   west build -b <your_board> samples/midi1_arp
+   west build -b frdm_mcxc242 modules/lib/midi1/samples/midi1_arp_phase_shift
 
-Replace ``<your_board>`` with your specific board.
-
-Once flashed, connect your MIDI keyboard to the MIDI IN, and a synthesizer to MIDI OUT. Play a chord on the keyboard to hear it arpeggiated on the synthesizer.
+Once running, use SW2 to toggle Latch and SW3 to cycle through the phasing and process modes. Watch the console for a live visualization of the evolving arpeggio.

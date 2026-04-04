@@ -6,5 +6,6 @@ project(midi1_arp_phase_shift)
 
 target_sources(app PRIVATE
     src/main.c
-    src/note.c 
+    src/note.c
+    src/arp.c
 )

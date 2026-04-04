@@ -1,19 +1,23 @@
-.. _midi1_arp_sample:
+.. _midi1_octave_arp_sample:
 
-MIDI 1.0 Arpeggiator Sample
-###########################
+MIDI 1.0 Converging Arpeggiator Sample
+######################################
 
 Overview
 ********
-This sample application demonstrates the creation of an Arpeggiator using the MIDI 1.0 drivers.
-It combines clock generation with both input and output processing, serving as a comprehensive demonstration of the library's capabilities.
+This sample application implements a highly musical "converging" arpeggiator that utilizes counter-point motion and integrated hardware controls.
 
-The application generates a MIDI clock using the hardware counter driver. It listens for incoming MIDI notes. When a chord (or multiple notes) is played, it arpeggiates those notes, sending them out sequentially synchronized to the generated MIDI clock.
+Key Features:
+* **Counter-point Arpeggiation:** Plays two layers simultaneously for every step:
+    1. A base octave note moving in an **UPWARD** sequence.
+    2. A mirrored upper-octave note moving in a **REVERSED** sequence.
+* **Physical Latch Mode:** Use the onboard **SW2 button** to toggle arpeggiator latching. The **Red LED** indicates when Latch is active.
+* **Tempo Heartbeat:** The **Blue LED** flashes in sync with the current MIDI clock (every quarter note), providing clear visual tempo feedback.
+* **Intelligent Buffer Management:** Automatically clears and replaces the held sequence when a new chord is played while in Latch mode.
 
 Requirements
 ************
-* A board with UART configured for MIDI (31250 baud) and a hardware counter (like ``frdm_k64f`` or ``frdm_mcxc242``).
-* A MIDI interface to connect to a synthesizer and a MIDI keyboard.
+* A board with UART configured for MIDI, a hardware counter, and user-accessible LEDs/Buttons (like ``frdm_mcxc242``).
 
 Building and Running
 ********************
@@ -21,8 +25,6 @@ Build the sample using west:
 
 .. code-block:: bash
 
-   west build -b <your_board> samples/midi1_arp
+   west build -b frdm_mcxc242 modules/lib/midi1/samples/midi1_octave_arp
 
-Replace ``<your_board>`` with your specific board.
-
-Once flashed, connect your MIDI keyboard to the MIDI IN, and a synthesizer to MIDI OUT. Play a chord on the keyboard to hear it arpeggiated on the synthesizer.
+Press SW2 to enable Latch (Red LED on). Play a chord and release; the arpeggio will continue playing until you play a new chord.
