@@ -2,7 +2,7 @@
 
 config MIDI1_SERIAL
     bool "MIDI1 serial UART driver"
-    default y
+    default n
 
 config MIDI1_SERIAL_CHANNEL
     int "MIDI channel to use (1-16)"

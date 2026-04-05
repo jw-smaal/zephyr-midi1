@@ -2,4 +2,4 @@
 
 config MIDI1_CLOCK_CNTR
     bool "MIDI1 clock generator driver"
-    default y
+    default n

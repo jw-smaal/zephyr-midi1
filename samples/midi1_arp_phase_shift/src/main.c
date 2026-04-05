@@ -191,10 +191,6 @@ void control_change_handler(uint8_t channel, uint8_t controller, uint8_t value)
 	case CTL_MSB_MODWHEEL:
 		break;
 	case CTL_SUSTAIN:
-		if (value ==0) {
-			/* We want to use the Sus pedal as a toggle switch */
-			break;
-		}	
 		arp_set_latch(&arp, !arp.latch_enabled);
 		/* Red LED is active-low: 0 = ON, 1 = OFF */
 		gpio_pin_set_dt(&latch_led, !arp.latch_enabled);

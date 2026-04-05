@@ -2,7 +2,7 @@
 
 config MIDI1_CLOCK_MEAS_CNTR
     bool "MIDI1 clock measurement counter driver"
-    default y
+    default n
 
 config MIDI1_CLOCK_MEAS_BLOCKAVG_SIZE
     int "Clock measurement block average size"
