@@ -123,8 +123,10 @@ void mode_button_pressed(const struct device *dev, struct gpio_callback *cb,
  */
 void arp_step_handler(struct k_work *work)
 {
+	static bool was_running = false;
 	struct arp_tick_result result;
 	uint8_t current_base, current_high;
+	bool is_running;
 
 	/* Get the pitches that are currently sounding to turn them off */
 	arp_get_current_pitches(&arp, &current_base, &current_high);
@@ -144,11 +146,19 @@ void arp_step_handler(struct k_work *work)
 			     result.velocity);
 	}
 
-	/* Global silence check */
-	if (!arp_is_running(&arp)) {
-		mid->note_off(midi_serial, MY_MIDI1_CHAN, current_base, 0);
-		mid->note_off(midi_serial, MY_MIDI1_CHAN, current_high, 0);
+	is_running = arp_is_running(&arp);
+
+	/* Global silence check (only trigger once when stopping) */
+	if (!is_running && was_running) {
+		if (current_base > 0) {
+			mid->note_off(midi_serial, MY_MIDI1_CHAN, current_base, 0);
+		}
+		if (current_high > 0) {
+			mid->note_off(midi_serial, MY_MIDI1_CHAN, current_high, 0);
+		}
 	}
+	
+	was_running = is_running;
 }
 
 /**
@@ -191,6 +201,10 @@ void control_change_handler(uint8_t channel, uint8_t controller, uint8_t value)
 	case CTL_MSB_MODWHEEL:
 		break;
 	case CTL_SUSTAIN:
+		if (value ==0) {
+			/* We want to use the Sus pedal as a toggle switch */
+			break;
+		}	
 		arp_set_latch(&arp, !arp.latch_enabled);
 		/* Red LED is active-low: 0 = ON, 1 = OFF */
 		gpio_pin_set_dt(&latch_led, !arp.latch_enabled);
