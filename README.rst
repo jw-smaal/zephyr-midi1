@@ -31,36 +31,16 @@ To set up a fresh Zephyr workspace including this MIDI1.0 module, follow these s
       mkdir zephyr-workspace
       cd zephyr-workspace
 
-2. **Initialize the workspace:**
+2. **Initialize and pull all required source code:**
 
-   Initialize your workspace using this module's repository as the manifest:
+   This command initializes the workspace using this module as the manifest and pulls Zephyr (v4.4.0-rc2), HALs, and this module.
 
    .. code-block:: bash
 
       west init -m https://github.com/jw-smaal/zephyr-midi1
-
-3. **Pin to Zephyr v4.4.0-rc2:**
-
-   To ensure compatibility with this driver, pin your workspace to the v4.4.0-rc2 release by editing the generated ``west.yml`` file:
-
-   .. code-block:: yaml
-
-      manifest:
-        projects:
-          - name: zephyr
-            remote: zephyrproject-rtos
-            revision: v4.4.0-rc2
-            import: true
-
-4. **Pull all required source code:**
-
-   Run the following command to download Zephyr, the required HALs, and this MIDI module:
-
-   .. code-block:: bash
-
       west update
 
-5. **Install Python dependencies:**
+3. **Install Python dependencies:**
 
    Ensure your environment has all the necessary tools to build Zephyr applications:
 
