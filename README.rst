@@ -20,33 +20,41 @@ Features
 Integration via West
 ********************
 
-To set up a fresh Zephyr workspace including this MIDI1.0 module, follow these step-by-step instructions:
+Scenario 1: Standalone Workspace (Quick Start)
+==============================================
 
-1. **Create a workspace directory:**
+To set up a fresh Zephyr workspace (v4.4.0-rc2) including this MIDI1.0 module, follow these steps:
 
-   Open your terminal and create a folder for your project:
+1. **Create and initialize the workspace:**
 
    .. code-block:: bash
 
       mkdir zephyr-workspace
       cd zephyr-workspace
-
-2. **Initialize and pull all required source code:**
-
-   This command initializes the workspace using this module as the manifest and pulls Zephyr (v4.4.0-rc2), HALs, and this module.
-
-   .. code-block:: bash
-
       west init -m https://github.com/jw-smaal/zephyr-midi1
       west update
 
-3. **Install Python dependencies:**
-
-   Ensure your environment has all the necessary tools to build Zephyr applications:
+2. **Install Python dependencies:**
 
    .. code-block:: bash
 
       pip install -r zephyr/scripts/requirements.txt
+
+Scenario 2: Advanced Integration (Adding to Existing Project)
+=============================================================
+
+If you already have a Zephyr workspace and want to add this module, add it to your ``west.yml`` manifest:
+
+.. code-block:: yaml
+
+   manifest:
+     projects:
+       - name: midi1
+         url: https://github.com/jw-smaal/zephyr-midi1
+         revision: main
+         path: modules/lib/midi1
+
+Then run ``west update``. The module will be automatically detected by the Zephyr build system.
 
 Configuration
 *************
