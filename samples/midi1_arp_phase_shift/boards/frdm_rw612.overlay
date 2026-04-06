@@ -2,115 +2,49 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * Device tree overlay created for the FRDM_RW612 development kit
- * adjusted the pinmux so that we can use it for MIDI out and in.
- * @author Jan-Willem Smaal <usenet@gispen.org>
- * @date 20241223
- * updated in 20260206
- */
-
- /* Let's make sure both are enabled and act in the same way as the pit0 */
-&ctimer0 {
-	status = "okay";
-	/* Divide 260 MHz by 4 → 24 MHz timer */
-	prescale = <11>;
-};
-&ctimer1 {
-	status = "okay";
-	/* Divide 260 MHz by 4 → 24 MHz timer */
-	prescale = <11>;
-};
-
-/*
- * Configured with the MIDI BAUD rate of 31250
- * This is the USART on the MIDI arduino shield.
- * GPIO 8 and 9.
- */
-&flexcomm1 {
-	compatible = "nxp,lpc-usart";
-	status = "okay";
-	current-speed = <31250>;
-	pinctrl-0 = <&pinmux_flexcomm1_usart>;
-	pinctrl-names = "default";
-};
-
-/*
- * We want to set flexcomm1 to USART instead of the default.
- * this is why we need to set the pinmux here.
- */
-&pinctrl {
-	pinmux_flexcomm1_usart: pinmux_flexcomm1_usart {
-		group0 {
-			pinmux = <IO_MUX_FC1_USART_DATA>;
-			slew-rate = "normal";
-		};
-	};
-};
-
-#include <zephyr/dt-bindings/adc/nxp,gau-adc.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/gpio/arduino-header-r3.h>
 
 / {
-	aliases {
-		counterch0 = &ctimer0;
-		counterch1 = &ctimer1;
-		led1 = &green_led;
-		led2 = &green_led;
-		sw1 = &user_button_0;
-	};
-	/* MIDI1.0 serial USART driver, set the uart baud to 31250. */
 	midi1: midi1 {
 		status = "okay";
 		compatible = "midi1_serial";
-		uart = <&flexcomm1>;
+		uart = <&flexcomm3>;
 	};
-	/* MIDI1.0 clock generator for SERIAL MIDI1.0 */
-	midi1_clock_cntr: midi1_clock_cntr {
-		status = "okay";
+
+	midi1_clock_cntr_0: midi1_clock_cntr_0 {
 		compatible = "midi1_clock_cntr";
 		counter = <&ctimer0>;
 		midi1_serial = <&midi1>;
-	};
-	/* MIDI1.0 clock measurement system using the Zephyr timer */
-	midi1_clock_meas_cntr: midi1_clock_meas_cntr {
 		status = "okay";
-		compatible = "midi1_clock_meas_cntr";
-		counter = <&ctimer1>;
 	};
-	/* Zephyr USB MIDI2.0 driver */
-	usb_midi: usb_midi {
-		compatible = "zephyr,midi2-device";
-		status = "okay";
-		#address-cells = <1>;
-		#size-cells = <1>;
-		label = "Zephyr USB-MIDI";
 
-		midi_in_out@0 {
-			reg = <0 1>;
-			protocol = "midi1-up-to-128b";
-			label = "MIDI-IN-OUT";
+	rotary_encoder: rotary-encoder {
+		compatible = "gpio-qdec";
+		gpios = <&arduino_header 12 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>, /* D6 */
+			<&arduino_header 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D7 */
+		steps-per-period = <4>;
+		zephyr,axis = <INPUT_REL_WHEEL>;
+		sample-time-us = <2000>;
+		idle-timeout-ms = <200>;
+		status = "okay";
+	};
+
+	encoder_button: encoder-button {
+		compatible = "gpio-keys";
+		button0: button_0 {
+			gpios = <&arduino_header 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D2 */
+			label = "Encoder Push Button";
+			zephyr,code = <INPUT_KEY_2>;
 		};
 	};
-
-	zephyr,user {
-		io-channels = <&adc0 0>;
-	};
 };
 
-&adc0 {
+&flexcomm3 {
 	status = "okay";
-	#address-cells = <1>;
-	#size-cells = <0>;
-
-	channel@0 {
-		reg = <0>;
-		zephyr,gain = "ADC_GAIN_1";
-		zephyr,reference = "ADC_REF_VDD_1";
-		zephyr,vref-mv = <1800>;
-		zephyr,acquisition-time = <0>;
-		zephyr,resolution = <16>;
-		zephyr,input-positive = <GAU_ADC_CH0>;
-	};
+	current-speed = <31250>;
 };
 
-/* EOF */
+&ctimer0 {
+	status = "okay";
+};

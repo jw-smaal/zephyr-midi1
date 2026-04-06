@@ -2,39 +2,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * @file frdm_mcxw71.overlay
- * @brief Overlay for MIDI 1.0 Hybrid Test on FRDM-MCXW71
- *
- * MIDI Serial: LPUART0 (Arduino Header D0/D1)
- * MIDI Clock: LPIT0 Channel 0
- * MIDI Measurement: LPIT0 Channel 1
- */
-
-&lpuart0 {
-	status = "okay";
-	current-speed = <31250>;
-};
-
-&lpit0 {
-	status = "okay";
-};
-
-&lpit1_channel0 {
-	status = "okay";
-};
-
-&lpit1_channel1 {
-	status = "okay";
-};
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/gpio/arduino-header-r3.h>
 
 / {
-	aliases {
-		led1 = &blue_led;
-		led2 = &blue_led;
-		sw1 = &user_button_0;
-	};
-
 	midi1: midi1 {
 		status = "okay";
 		compatible = "midi1_serial";
@@ -43,36 +14,37 @@
 
 	midi1_clock_cntr_0: midi1_clock_cntr_0 {
 		compatible = "midi1_clock_cntr";
-		counter = <&lpit1_channel0>;
+		counter = <&lptmr0>;
 		midi1_serial = <&midi1>;
 		status = "okay";
 	};
 
-	midi1_clock_meas_cntr_0: midi1_clock_meas_cntr_0 {
-		compatible = "midi1_clock_meas_cntr";
-		counter = <&lpit1_channel1>;
+	rotary_encoder: rotary-encoder {
+		compatible = "gpio-qdec";
+		gpios = <&arduino_header 12 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>, /* D6 */
+			<&arduino_header 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D7 */
+		steps-per-period = <4>;
+		zephyr,axis = <INPUT_REL_WHEEL>;
+		sample-time-us = <2000>;
+		idle-timeout-ms = <200>;
 		status = "okay";
 	};
 
-	zephyr,user {
-		io-channels = <&adc0 6>;
+	encoder_button: encoder-button {
+		compatible = "gpio-keys";
+		button0: button_0 {
+			gpios = <&arduino_header 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D2 */
+			label = "Encoder Push Button";
+			zephyr,code = <INPUT_KEY_2>;
+		};
 	};
 };
 
-&adc0 {
+&lpuart0 {
 	status = "okay";
-	pinctrl-0 = <&pinmux_lpadc0>;
-	pinctrl-names = "default";
+	current-speed = <31250>;
+};
 
-	#address-cells = <1>;
-	#size-cells = <0>;
-
-	channel@6 {
-		reg = <6>;
-		zephyr,gain = "ADC_GAIN_1";
-		zephyr,reference = "ADC_REF_VDD_1";
-		zephyr,vref-mv = <3300>;
-		zephyr,acquisition-time = <0>;
-		zephyr,resolution = <12>;
-	};
+&lptmr0 {
+	status = "okay";
 };

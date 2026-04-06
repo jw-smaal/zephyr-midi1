@@ -10,4 +10,5 @@ target_sources(app PRIVATE
     src/arp.c
     src/tempo.c
     src/display_mgr.c
+    src/encoder_mgr.c
 )

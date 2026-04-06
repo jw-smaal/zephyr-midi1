@@ -285,6 +285,35 @@ bool arp_is_running(struct arp_ctx *ctx)
 	return ctx->arp_running;
 }
 
+void arp_reset(struct arp_ctx *ctx)
+{
+	k_mutex_lock(&ctx->lock, K_FOREVER);
+	ctx->base.index = 0;
+	ctx->base.clock_counter = 0;
+	ctx->base.playing_pitch = 0;
+
+	ctx->high.index = 0;
+	ctx->high.clock_counter = 0;
+	ctx->high.playing_pitch = 0;
+	ctx->high.drift_trigger_count = 0;
+	ctx->high.lag_pending = false;
+
+	ctx->process_len = 1;
+	ctx->process_offset = 0;
+	ctx->process_building = true;
+	k_mutex_unlock(&ctx->lock);
+}
+
+void arp_clear(struct arp_ctx *ctx)
+{
+	k_mutex_lock(&ctx->lock, K_FOREVER);
+	ctx->num_notes = 0;
+	ctx->physical_keys_count = 0;
+	ctx->arp_running = false;
+	k_mutex_unlock(&ctx->lock);
+	arp_reset(ctx);
+}
+
 int arp_get_num_notes(struct arp_ctx *ctx)
 {
 	return ctx->num_notes;

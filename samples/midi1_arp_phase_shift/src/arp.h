@@ -122,4 +122,14 @@ bool arp_is_running(struct arp_ctx *ctx);
  */
 int arp_get_num_notes(struct arp_ctx *ctx);
 
+/**
+ * @brief Reset the arpeggiator state (counters, windows) but keep the notes.
+ */
+void arp_reset(struct arp_ctx *ctx);
+
+/**
+ * @brief Clear all notes and reset the arpeggiator.
+ */
+void arp_clear(struct arp_ctx *ctx);
+
 #endif /* ARP_H_ */

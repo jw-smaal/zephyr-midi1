@@ -5,26 +5,22 @@
 #ifndef TEMPO_H_
 #define TEMPO_H_
 
-#include <zephyr/drivers/adc.h>
 #include <zephyr/device.h>
+#include <zephyr/kernel.h>
 
 /**
  * @file tempo.h
- * @brief Modular Tempo Controller for ADC-based BPM management.
+ * @brief Modular Tempo Controller for Encoder-based BPM management.
  *
  * @author Jan-Willem Smaal <usenet@gispen.org>
  */
 
 struct tempo_ctx {
 	const struct device *midi_clock_dev;
-	struct adc_dt_spec adc_spec;
-	int16_t adc_buf;
-	struct adc_sequence sequence;
 
-	int32_t last_bpm;
+	int32_t current_bpm; /* BPM * 100 */
 	uint32_t min_bpm;
 	uint32_t max_bpm;
-	uint32_t deadband;
 };
 
 /**
@@ -32,17 +28,16 @@ struct tempo_ctx {
  *
  * @param ctx The tempo context to initialize.
  * @param clk_dev The MIDI clock counter device to update.
- * @param adc_idx The index of the ADC channel in the zephyr,user node.
  * @return 0 on success, negative errno on failure.
  */
-int tempo_init(struct tempo_ctx *ctx, const struct device *clk_dev,
-	       uint8_t adc_idx);
+int tempo_init(struct tempo_ctx *ctx, const struct device *clk_dev);
 
 /**
- * @brief Sample the ADC and update the MIDI clock tempo if needed.
+ * @brief Directly update the BPM value and the hardware MIDI clock.
  *
  * @param ctx The tempo context.
+ * @param new_bpm The new BPM (times 100).
  */
-void tempo_update(struct tempo_ctx *ctx);
+void tempo_set_bpm(struct tempo_ctx *ctx, int32_t new_bpm);
 
 #endif /* TEMPO_H_ */

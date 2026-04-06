@@ -18,6 +18,7 @@
 
 #include "display_mgr.h"
 #include "note.h"
+#include "encoder_mgr.h"
 
 LOG_MODULE_REGISTER(display_mgr, LOG_LEVEL_WRN);
 
@@ -45,6 +46,10 @@ void display_thread(void *p1, void *p2, void *p3)
 		uint8_t base_pitch;
 		uint8_t high_pitch;
 		int num_notes;
+		int drift_cycle;
+		enum encoder_param param;
+		bool shifted;
+		enum arp_mode pending_mode;
 	} last_state = {.mode = 255};
 
 	char line1[32], line2[32], line3[32], line4[32];
@@ -58,23 +63,33 @@ void display_thread(void *p1, void *p2, void *p3)
 
 	while (1) {
 		bool changed = false;
+		enum encoder_param current_p = encoder_mgr_get_current_param();
+		bool current_s = encoder_mgr_is_shift_active();
+
+		enum arp_mode current_m = encoder_mgr_get_pending_mode();
 
 		/* --- Step 1: Rapid Snapshot --- */
 		k_mutex_lock(&g_arp->lock, K_FOREVER);
 
 		if (g_arp->mode != last_state.mode || g_arp->latch_enabled != last_state.latch ||
-		    g_tempo->last_bpm != last_state.bpm ||
+		    g_tempo->current_bpm != last_state.bpm ||
 		    g_arp->base.playing_pitch != last_state.base_pitch ||
 		    g_arp->high.playing_pitch != last_state.high_pitch ||
-		    g_arp->num_notes != last_state.num_notes) {
+		    g_arp->num_notes != last_state.num_notes ||
+		    g_arp->drift_cycle != last_state.drift_cycle || current_p != last_state.param ||
+		    current_s != last_state.shifted || current_m != last_state.pending_mode) {
 
 			/* Copy state into local snapshot */
 			last_state.mode = g_arp->mode;
 			last_state.latch = g_arp->latch_enabled;
-			last_state.bpm = g_tempo->last_bpm;
+			last_state.bpm = g_tempo->current_bpm;
 			last_state.base_pitch = g_arp->base.playing_pitch;
 			last_state.high_pitch = g_arp->high.playing_pitch;
 			last_state.num_notes = g_arp->num_notes;
+			last_state.drift_cycle = g_arp->drift_cycle;
+			last_state.param = current_p;
+			last_state.shifted = current_s;
+			last_state.pending_mode = current_m;
 			changed = true;
 		}
 
@@ -83,30 +98,46 @@ void display_thread(void *p1, void *p2, void *p3)
 		/* --- Step 2: Render if changed --- */
 		if (changed) {
 			const char *m_str = "SYNC";
-			if (last_state.mode == ARP_MODE_PHASE) {
+			enum arp_mode disp_m = (last_state.param == ENCODER_PARAM_MODE)
+						       ? last_state.pending_mode
+						       : last_state.mode;
+
+			if (disp_m == ARP_MODE_PHASE) {
 				m_str = "PHASE";
-			} else if (last_state.mode == ARP_MODE_PROCESS) {
+			} else if (disp_m == ARP_MODE_PROCESS) {
 				m_str = "PROC";
-			} else if (last_state.mode == ARP_MODE_PHASE_PROCESS) {
+			} else if (disp_m == ARP_MODE_PHASE_PROCESS) {
 				m_str = "PH+PR";
 			}
 
-			snprintf(line1, sizeof(line1), "M:%s L:%s", m_str,
-				 last_state.latch ? "ON" : "OFF");
-			snprintf(line2, sizeof(line2), "BPM: %d.%02d", last_state.bpm / 100,
-				 last_state.bpm % 100);
+			/* Show '?' if the displayed mode is different from active mode */
+			char confirm_char = (last_state.param == ENCODER_PARAM_MODE &&
+					     last_state.pending_mode != last_state.mode)
+						    ? '?'
+						    : ' ';
 
-			if (last_state.num_notes > 0) {
-				snprintf(line3, sizeof(line3), "Notes: %d", last_state.num_notes);
-			} else {
-				snprintf(line3, sizeof(line3), "IDLE");
-			}
+			snprintf(line1, sizeof(line1), "%c%-7s%c %s",
+				 (last_state.param == ENCODER_PARAM_MODE ? '*' : ' '), m_str,
+				 confirm_char, last_state.latch ? "LATCH" : "     ");
+
+			/* Label changes from BPM to bpm when shifted (Fine mode) */
+			snprintf(line2, sizeof(line2), "%c%s: %d.%02d  %s",
+				 (last_state.param == ENCODER_PARAM_BPM ? '*' : ' '),
+				 (last_state.shifted ? "bpm" : "BPM"), last_state.bpm / 100,
+				 last_state.bpm % 100, (last_state.shifted ? "SHIFT" : "     "));
+
+			snprintf(line3, sizeof(line3), "%cDrift: %d",
+				 (last_state.param == ENCODER_PARAM_DRIFT ? '*' : ' '),
+				 last_state.drift_cycle);
+
+			snprintf(line4, sizeof(line4), "Notes: %d", last_state.num_notes);
 
 			/* Perform I2C transfer outside of mutex lock */
 			cfb_framebuffer_clear(display_dev, false);
 			cfb_print(display_dev, line1, 0, 0);
 			cfb_print(display_dev, line2, 0, font_height);
 			cfb_print(display_dev, line3, 0, font_height * 2);
+			cfb_print(display_dev, line4, 0, font_height * 3);
 			cfb_framebuffer_finalize(display_dev);
 		}
 

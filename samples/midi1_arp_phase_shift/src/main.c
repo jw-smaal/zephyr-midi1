@@ -16,38 +16,30 @@
 #include <zephyr/drivers/midi/midi1_serial.h>
 #include <zephyr/drivers/midi/midi1_clock_cntr.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
 #include "note.h"
 #include "arp.h"
 #include "tempo.h"
 #include "display_mgr.h"
+#include "encoder_mgr.h"
 
-LOG_MODULE_REGISTER(midi1_arp_phase_app, LOG_LEVEL_WRN);
+LOG_MODULE_REGISTER(midi1_arp_phase_app, LOG_LEVEL_INF);
 
-#define TARGET_BPM CONFIG_MIDI1_ARP_TARGET_BPM
+#define TARGET_BPM    CONFIG_MIDI1_ARP_TARGET_BPM
 #define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1)
 /* #define DRIFT_CYCLE 8 */
-#define DRIFT_CYCLE CONFIG_MIDI1_ARP_DRIFT_CYCLE
+#define DRIFT_CYCLE   CONFIG_MIDI1_ARP_DRIFT_CYCLE
 
 /* MIDI Clock standard is 24 Pulses Per Quarter Note (PPQN) */
-#define MIDI_CLOCK_PPQN 24
+#define MIDI_CLOCK_PPQN         24
 /* Toggle the tempo LED every half-beat for a 50% duty cycle */
 #define TEMPO_LED_TOGGLE_PULSES (MIDI_CLOCK_PPQN / 2)
 
 /* Hardware Specifications */
-static const struct gpio_dt_spec latch_led =
-	GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios); /* Red */
-static const struct gpio_dt_spec mode_led =
-	GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios); /* Green */
-static const struct gpio_dt_spec tempo_led =
-	GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios); /* Blue */
-static const struct gpio_dt_spec button =
-	GPIO_DT_SPEC_GET(DT_ALIAS(sw0), gpios); /* SW2 */
-static const struct gpio_dt_spec mode_button =
-	GPIO_DT_SPEC_GET(DT_ALIAS(sw1), gpios); /* SW3 */
-
-static struct gpio_callback button_cb_data;
-static struct gpio_callback mode_button_cb_data;
+static const struct gpio_dt_spec latch_led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios); /* Red */
+static const struct gpio_dt_spec mode_led = GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios);  /* Green */
+static const struct gpio_dt_spec tempo_led = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios); /* Blue */
 
 /* MIDI Devices */
 static const struct device *midi_serial;
@@ -62,7 +54,6 @@ K_SEM_DEFINE(init_sem, 0, 1);
 
 static struct k_work arp_step_work;
 static struct k_work tempo_work;
-static struct k_work_delayable bpm_update_work;
 
 /**
  * @brief Work handler for the tempo LED flash.
@@ -75,48 +66,29 @@ void tempo_work_handler(struct k_work *work)
 }
 
 /**
- * @brief Toggles Latch mode.
+ * @brief Input Subsystem callback for UI LED feedback.
  */
-void button_pressed(const struct device *dev, struct gpio_callback *cb,
-		    uint32_t pins)
+static void ui_input_cb(struct input_event *evt, void *user_data)
 {
-	arp_set_latch(&arp, !arp.latch_enabled);
-	/* Red LED is active-low: 0 = ON, 1 = OFF */
-	gpio_pin_set_dt(&latch_led, !arp.latch_enabled);
-	LOG_INF("Latch Mode: %s", arp.latch_enabled ? "ON" : "OFF");
-}
-
-/**
- * @brief Cycles through Arpeggiator Modes.
- */
-void mode_button_pressed(const struct device *dev, struct gpio_callback *cb,
-			 uint32_t pins)
-{
-	enum arp_mode next_mode = (arp.mode + 1) % ARP_MODE_MAX;
-	arp_set_mode(&arp, next_mode);
-
-	/* Green LED feedback */
-	switch (arp.mode) {
-	case ARP_MODE_SYNC:
-		gpio_pin_set_dt(&mode_led, 0); /* Off */
-		LOG_INF("Mode: SYNC");
-		break;
-	case ARP_MODE_PHASE:
-		gpio_pin_set_dt(&mode_led, 1); /* On */
-		LOG_INF("Mode: PHASE DRIFT");
-		break;
-	case ARP_MODE_PROCESS:
-		gpio_pin_set_dt(&mode_led, 1);
-		LOG_INF("Mode: PROCESS (Additive)");
-		break;
-	case ARP_MODE_PHASE_PROCESS:
-		gpio_pin_set_dt(&mode_led, 1);
-		LOG_INF("Mode: PHASE + PROCESS");
-		break;
-	default:
-		break;
+	if (evt->type == INPUT_EV_KEY && evt->value) {
+		switch (evt->code) {
+		case INPUT_KEY_0: /* Latch */
+			/* Update Red LED: ON when latch is active (active-low) */
+			gpio_pin_set_dt(&latch_led, !arp.latch_enabled);
+			break;
+		case INPUT_KEY_1: /* Clear */
+			/* Flash Green LED briefly to confirm clear */
+			gpio_pin_set_dt(&mode_led, 1);
+			k_sleep(K_MSEC(100));
+			gpio_pin_set_dt(&mode_led, 0);
+			break;
+		default:
+			break;
+		}
 	}
 }
+
+INPUT_CALLBACK_DEFINE(NULL, ui_input_cb, NULL);
 
 /**
  * @brief Executes the MIDI note changes for an arpeggio step.
@@ -136,14 +108,12 @@ void arp_step_handler(struct k_work *work)
 
 	if (result.base_triggered) {
 		mid->note_off(midi_serial, MY_MIDI1_CHAN, current_base, 0);
-		mid->note_on(midi_serial, MY_MIDI1_CHAN, result.base_pitch,
-			     result.velocity);
+		mid->note_on(midi_serial, MY_MIDI1_CHAN, result.base_pitch, result.velocity);
 	}
 
 	if (result.high_triggered) {
 		mid->note_off(midi_serial, MY_MIDI1_CHAN, current_high, 0);
-		mid->note_on(midi_serial, MY_MIDI1_CHAN, result.high_pitch,
-			     result.velocity);
+		mid->note_on(midi_serial, MY_MIDI1_CHAN, result.high_pitch, result.velocity);
 	}
 
 	is_running = arp_is_running(&arp);
@@ -157,7 +127,7 @@ void arp_step_handler(struct k_work *work)
 			mid->note_off(midi_serial, MY_MIDI1_CHAN, current_high, 0);
 		}
 	}
-	
+
 	was_running = is_running;
 }
 
@@ -201,15 +171,14 @@ void control_change_handler(uint8_t channel, uint8_t controller, uint8_t value)
 	case CTL_MSB_MODWHEEL:
 		break;
 	case CTL_SUSTAIN:
-		if (value ==0) {
+		if (value == 0) {
 			/* We want to use the Sus pedal as a toggle switch */
 			break;
-		}	
+		}
 		arp_set_latch(&arp, !arp.latch_enabled);
 		/* Red LED is active-low: 0 = ON, 1 = OFF */
 		gpio_pin_set_dt(&latch_led, !arp.latch_enabled);
-		LOG_INF("Sustain Pedal Latch: %s",
-			arp.latch_enabled ? "ON" : "OFF");
+		LOG_INF("Sustain Pedal Latch: %s", arp.latch_enabled ? "ON" : "OFF");
 		break;
 	default:
 		break;
@@ -237,42 +206,19 @@ void midi_rx_thread(void)
 
 K_THREAD_DEFINE(midi_rx_tid, 512, midi_rx_thread, NULL, NULL, NULL, 5, 0, 0);
 
-/**
- * @brief Samples the ADC and updates the arpeggiator BPM.
- */
-void bpm_update_work_handler(struct k_work *work)
-{
-	tempo_update(&tempo);
-
-	/* Reschedule next sample in 300ms */
-	k_work_reschedule(&bpm_update_work, K_MSEC(300));
-}
-
 int main(void)
 {
 	int err;
 
 	/* 1. Hardware Setup */
-	if (!gpio_is_ready_dt(&button) || !gpio_is_ready_dt(&latch_led) ||
-	    !gpio_is_ready_dt(&tempo_led) || !gpio_is_ready_dt(&mode_button) ||
+	if (!gpio_is_ready_dt(&latch_led) || !gpio_is_ready_dt(&tempo_led) ||
 	    !gpio_is_ready_dt(&mode_led)) {
 		return -ENODEV;
 	}
 
-	gpio_pin_configure_dt(&button, GPIO_INPUT);
-	gpio_pin_configure_dt(&mode_button, GPIO_INPUT);
 	gpio_pin_configure_dt(&latch_led, GPIO_OUTPUT_ACTIVE); /* High = OFF */
 	gpio_pin_configure_dt(&tempo_led, GPIO_OUTPUT_INACTIVE);
 	gpio_pin_configure_dt(&mode_led, GPIO_OUTPUT_INACTIVE);
-
-	gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_TO_ACTIVE);
-	gpio_init_callback(&button_cb_data, button_pressed, BIT(button.pin));
-	gpio_add_callback(button.port, &button_cb_data);
-
-	gpio_pin_interrupt_configure_dt(&mode_button, GPIO_INT_EDGE_TO_ACTIVE);
-	gpio_init_callback(&mode_button_cb_data, mode_button_pressed,
-			   BIT(mode_button.pin));
-	gpio_add_callback(mode_button.port, &mode_button_cb_data);
 
 	midi_serial = DEVICE_DT_GET(DT_NODELABEL(midi1));
 	midi_clock_dev = DEVICE_DT_GET_ANY(midi1_clock_cntr);
@@ -284,16 +230,22 @@ int main(void)
 
 	/* 2. Logic Initialization */
 	arp_init(&arp, CONFIG_MIDI1_ARP_TIMING_INTERVAL, DRIFT_CYCLE);
-	
-	/* Initialize Tempo module (ADC 0 from zephyr,user) */
-	err = tempo_init(&tempo, midi_clock_dev, 0);
+
+	/* Initialize Encoder */
+	err = encoder_mgr_init(&arp, &tempo);
+	if (err < 0) {
+		LOG_ERR("Failed to initialize encoder manager: %d", err);
+		/* Non-fatal error */
+	}
+
+	/* Initialize Tempo module (Digital) */
+	err = tempo_init(&tempo, midi_clock_dev);
 	if (err < 0) {
 		return err;
 	}
 
 	k_work_init(&arp_step_work, arp_step_handler);
 	k_work_init(&tempo_work, tempo_work_handler);
-	k_work_init_delayable(&bpm_update_work, bpm_update_work_handler);
 
 	/* Display Setup (Modular) */
 	display_mgr_init(&arp, &tempo);
@@ -306,9 +258,6 @@ int main(void)
 	/* Initial clock start */
 	clk->gen(midi_clock_dev, TARGET_BPM);
 
-	/* Start periodic ADC sampling */
-	k_work_schedule(&bpm_update_work, K_NO_WAIT);
-
 	while (1) {
 		k_mutex_lock(&arp.lock, K_FOREVER);
 
@@ -318,44 +267,40 @@ int main(void)
 			int pos = 0;
 
 			snprintf(now_base, sizeof(now_base), "%s",
-				 noteToTextWithOctave(arp.base.playing_pitch,
-						      false));
+				 noteToTextWithOctave(arp.base.playing_pitch, false));
 			snprintf(now_high, sizeof(now_high), "%s",
-				 noteToTextWithOctave(arp.high.playing_pitch,
-						      false));
+				 noteToTextWithOctave(arp.high.playing_pitch, false));
 
 			for (int i = 0; i < arp.num_notes; i++) {
-				uint8_t h = (arp.notes[i].pitch + 12 <= 127) ?
-						    arp.notes[i].pitch + 12 :
-						    127;
+				uint8_t h = (arp.notes[i].pitch + 12 <= 127)
+						    ? arp.notes[i].pitch + 12
+						    : 127;
 
 				snprintf(base_str, sizeof(base_str), "%s",
-					 noteToTextWithOctave(arp.notes[i].pitch,
-							      false));
+					 noteToTextWithOctave(arp.notes[i].pitch, false));
 				snprintf(high_str, sizeof(high_str), "%s",
 					 noteToTextWithOctave(h, false));
 
-				pos += snprintf(chord_buf + pos,
-						sizeof(chord_buf) - pos,
-						"[%s->%s] ", base_str,
-						high_str);
+				pos += snprintf(chord_buf + pos, sizeof(chord_buf) - pos,
+						"[%s->%s] ", base_str, high_str);
 
-				if (pos >= sizeof(chord_buf) - 1)
+				if (pos >= sizeof(chord_buf) - 1) {
 					break;
+				}
 			}
 
 			const char *m_str = "SYNC";
-			if (arp.mode == ARP_MODE_PHASE)
+			if (arp.mode == ARP_MODE_PHASE) {
 				m_str = "PHASE";
-			else if (arp.mode == ARP_MODE_PROCESS)
+			} else if (arp.mode == ARP_MODE_PROCESS) {
 				m_str = "PROCESS";
-			else if (arp.mode == ARP_MODE_PHASE_PROCESS)
+			} else if (arp.mode == ARP_MODE_PHASE_PROCESS) {
 				m_str = "PH+PROC";
+			}
 
 			LOG_INF("ARP [%s] MODE [%s] | %d:%d | Now: %s/%s",
-				arp.latch_enabled ? "ON" : "OFF", m_str,
-				arp.process_offset, arp.process_len, now_base,
-				now_high);
+				arp.latch_enabled ? "ON" : "OFF", m_str, arp.process_offset,
+				arp.process_len, now_base, now_high);
 			LOG_INF("Chord: %s", chord_buf);
 		}
 

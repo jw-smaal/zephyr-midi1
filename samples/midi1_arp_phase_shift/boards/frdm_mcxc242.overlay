@@ -7,6 +7,8 @@
  * @brief Combined overlay for hybrid MIDI test on MCXC242
  */
 
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
 / {
 	/* Arduino header */
 	midi0: midi0 {
@@ -31,30 +33,31 @@
 		status = "okay";
 	};
 
-	zephyr,user {
-		/* adjust channel number according to pinmux in board.dts */
-		io-channels = <&adc0 1>;
-	};
-
 	chosen {
 		zephyr,display = &ssd1306;
 	};
-};
 
-&adc0 {
-	#address-cells = <1>;
-	#size-cells = <0>;
-	status = "okay";
-	long-sample = <0>; /* 24 ADCK cycles */
+	rotary_encoder: rotary-encoder {
+		compatible = "gpio-qdec";
+		/* Phase A on D6 (PTC9) */
+		gpios = <&gpioc 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
+			/* Phase B on D7 (PTC8) */
+			<&gpioc 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		steps-per-period = <4>;
+		zephyr,axis = <INPUT_REL_WHEEL>;
+		sample-time-us = <2000>;
+		idle-timeout-ms = <200>;
+		status = "okay";
+	};
 
-	channel@1 {
-		reg = <1>;
-		zephyr,gain = "ADC_GAIN_1";
-		zephyr,reference = "ADC_REF_VDD_1";
-		zephyr,vref-mv = <3300>;
-		zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 0)>; /* 24 cycles */
-		zephyr,resolution = <12>;
-		zephyr,oversampling = <5>; /* 32 samples average */
+	encoder_button: encoder-button {
+		compatible = "gpio-keys";
+		button0: button_0 {
+			/* Push Button on D2 (PTA12) */
+			gpios = <&gpioa 12 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			label = "Encoder Push Button";
+			zephyr,code = <INPUT_KEY_2>;
+		};
 	};
 };
 

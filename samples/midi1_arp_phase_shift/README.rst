@@ -10,24 +10,32 @@ Overview
 This is a Phasing Arpeggiator sample with real-time hardware controls for BPM and a visual dashboard.
 
 Key Features:
-* **Modular Architecture:** Logic is separated into ``arp`` (sequencing), ``tempo`` (ADC management), and ``display_mgr`` (OLED interface).
-* **ADC BPM Control:** Dynamically adjust the arpeggiator speed from **5.00 to 360.00 BPM** using a 10k Ohm potentiometer connected to pin **A1 (PTE16)**.
+* **Modular Architecture:** Logic is separated into ``arp`` (sequencing), ``tempo`` (digital clock management), and ``display_mgr`` (OLED interface).
+* **Rotary Encoder UI:** Precision control using a 5-pin rotary encoder:
+    * **Rotation:** Adjusts the active parameter (indicated by a ``*``).
+    * **Click (D2):** Cycles focus between **BPM**, **Drift**, and **Mode**.
+    * **Pending Mode Selection:** When adjusting the Arpeggiator Mode, the change is only applied after clicking the encoder button (a ``?`` indicates confirmation is needed).
+* **Precision BPM Control:** 
+    * **Coarse:** Adjust BPM in **1.00** increments by turning the knob.
+    * **Fine (SHIFT):** Hold **SW2** while turning to adjust in **0.01** increments.
 * **OLED Dashboard:** Real-time visualization on an **SSD1306** display, showing:
-    * Current arpeggiator Mode and Latch status.
-    * Live BPM readout from the potentiometer.
-    * Current note count in the held chord.
+    * Arpeggiator Mode and Latch status.
+    * High-precision BPM readout.
+    * Phase Drift Cycle value.
+    * Active note count.
 * **Rhythmic Phasing & Process Modes:** 
     * Slow drift logic for minimalist textures.
     * Additive/Subtractive sequence evolution.
-* **Low-Latency Design:** The display update runs in a low-priority background thread using state snapshotting to ensure the arpeggiator's MIDI timing remains rock-solid.
 
 Hardware Configuration
 **********************
-* **FRDM-MCXC242:** 
-    * Potentiometer: Pin **A1 (PTE16)**.
-    * OLED (SSD1306): I2C1 (Arduino Header SCL/SDA).
-    * Button SW2: Latch Toggle.
-    * Button SW3: Mode Selector.
+* **FRDM-MCXC242 (and similar boards):** 
+    * **Encoder Phase A:** Pin **D6**.
+    * **Encoder Phase B:** Pin **D7**.
+    * **Encoder Button:** Pin **D2**.
+    * **Button SW2:** SHIFT / Latch Toggle.
+    * **Button SW3:** Clear Arpeggiator.
+    * **OLED (SSD1306):** Standard Arduino Header I2C pins.
 
 Requirements
 ************

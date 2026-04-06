@@ -4,7 +4,7 @@
 
 /**
  * @file tempo.c
- * @brief Modular Tempo Controller implementation.
+ * @brief Modular Tempo Controller implementation (Digital Encoder).
  *
  * @author Jan-Willem Smaal <usenet@gispen.org>
  */
@@ -14,68 +14,33 @@
 #include <zephyr/logging/log.h>
 #include <stdlib.h>
 
-LOG_MODULE_DECLARE(midi1_arp_phase_app, LOG_LEVEL_WRN);
+LOG_MODULE_DECLARE(midi1_arp_phase_app, LOG_LEVEL_INF);
 
-int tempo_init(struct tempo_ctx *ctx, const struct device *clk_dev,
-	       uint8_t adc_idx)
+int tempo_init(struct tempo_ctx *ctx, const struct device *clk_dev)
 {
-	int err;
-
 	ctx->midi_clock_dev = clk_dev;
 	ctx->min_bpm = CONFIG_MIDI1_ARP_TEMPO_MINIMUM;
 	ctx->max_bpm = CONFIG_MIDI1_ARP_TEMPO_MAXIMUM;
-	ctx->deadband = CONFIG_MIDI1_ARP_TEMPO_DEADBAND;
-	ctx->last_bpm = 0;
 
-	/* Setup ADC spec from zephyr,user node */
-	struct adc_dt_spec spec = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
-	ctx->adc_spec = spec;
-
-	if (!device_is_ready(ctx->adc_spec.dev)) {
-		LOG_ERR("ADC device not ready");
-		return -ENODEV;
-	}
-
-	err = adc_channel_setup_dt(&ctx->adc_spec);
-	if (err < 0) {
-		LOG_ERR("ADC channel setup failed (err %d)", err);
-		return err;
-	}
-
-	ctx->sequence.buffer = &ctx->adc_buf;
-	ctx->sequence.buffer_size = sizeof(ctx->adc_buf);
-
-	err = adc_sequence_init_dt(&ctx->adc_spec, &ctx->sequence);
-	if (err < 0) {
-		LOG_ERR("ADC sequence init failed (err %d)", err);
-		return err;
-	}
+	/* Initial default BPM */
+	ctx->current_bpm = CONFIG_MIDI1_ARP_TARGET_BPM;
 
 	return 0;
 }
 
-void tempo_update(struct tempo_ctx *ctx)
+void tempo_set_bpm(struct tempo_ctx *ctx, int32_t new_bpm)
 {
-	int err;
-	int32_t current_bpm;
 	const struct midi1_clock_cntr_api *clk = ctx->midi_clock_dev->api;
 
-	err = adc_read_dt(&ctx->adc_spec, &ctx->sequence);
-	if (err < 0) {
-		LOG_ERR("ADC read failed (err %d)", err);
-		return;
+	if (new_bpm < (int32_t)ctx->min_bpm) {
+		new_bpm = ctx->min_bpm;
+	}
+	if (new_bpm > (int32_t)ctx->max_bpm) {
+		new_bpm = ctx->max_bpm;
 	}
 
-	/* Map 12-bit ADC (0-4095) to min_bpm - max_bpm range */
-	current_bpm = (int32_t)ctx->min_bpm +
-		      ((int32_t)ctx->adc_buf *
-		       (int32_t)(ctx->max_bpm - ctx->min_bpm) / 4095);
+	ctx->current_bpm = new_bpm;
 
-	/* Apply deadband to avoid jitter */
-	if (abs(current_bpm - ctx->last_bpm) > (int32_t)ctx->deadband) {
-		clk->gen(ctx->midi_clock_dev, (uint16_t)current_bpm);
-		ctx->last_bpm = current_bpm;
-		LOG_INF("BPM Updated: %d.%02d", current_bpm / 100,
-			current_bpm % 100);
-	}
+	/* Push update to hardware clock */
+	clk->gen(ctx->midi_clock_dev, (uint16_t)ctx->current_bpm);
 }
