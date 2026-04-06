@@ -23,7 +23,7 @@
 LOG_MODULE_REGISTER(display_mgr, LOG_LEVEL_WRN);
 
 /* Stack for the background display thread */
-K_THREAD_STACK_DEFINE(display_stack, 2048);
+K_THREAD_STACK_DEFINE(display_stack, 1024);
 static struct k_thread display_thread_data;
 
 static struct arp_ctx *g_arp;

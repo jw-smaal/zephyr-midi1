@@ -17,8 +17,11 @@ Key Features:
     * **Pending Mode Selection:** When adjusting the Arpeggiator Mode, the change is only applied after clicking the encoder button (a ``?`` indicates confirmation is needed).
 * **Precision BPM Control:** 
     * **Coarse:** Adjust BPM in **1.00** increments by turning the knob.
-    * **Fine (SHIFT):** Hold **SW2** while turning to adjust in **0.01** increments.
+    * **Fine (SHIFT):** Hold **D10** while turning to adjust in **0.01** increments.
+
+
 * **OLED Dashboard:** Real-time visualization on an **SSD1306** display, showing:
+
     * Arpeggiator Mode and Latch status.
     * High-precision BPM readout.
     * Phase Drift Cycle value.
@@ -33,8 +36,10 @@ Hardware Configuration
     * **Encoder Phase A:** Pin **D6**.
     * **Encoder Phase B:** Pin **D7**.
     * **Encoder Button:** Pin **D2**.
-    * **Button SW2:** SHIFT / Latch Toggle.
+    * **Button D10:** SHIFT (Fine BPM Adjustment).
+    * **Button SW2:** Latch Toggle.
     * **Button SW3:** Clear Arpeggiator.
+
     * **OLED (SSD1306):** Standard Arduino Header I2C pins.
 
 Requirements
@@ -49,4 +54,7 @@ Build the experimental sample for the FRDM-MCXC242:
 
    west build -b frdm_mcxc242 WORK-GIT/midi1_arp_phase_shift
 
-Once flashed, use the potentiometer to sweep the BPM and watch the OLED display update in real-time. Use SW2 and SW3 to explore the various phasing and additive musical patterns.
+Once flashed, use the rotary encoder to sweep the BPM and watch the OLED display update in real-time. Use SW2, SW3, and the D9 SHIFT button to explore the various phasing and additive musical patterns.
+
+
+
