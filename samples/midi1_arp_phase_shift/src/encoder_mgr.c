@@ -29,15 +29,21 @@ static void input_cb(struct input_event *evt, void *user_data)
 
 	if (evt->type == INPUT_EV_REL && evt->code == INPUT_REL_WHEEL) {
 		int delta = evt->value;
-		if (delta == 0) return;
+		if (delta == 0) {
+			return;
+		}
 
 		k_mutex_lock(&g_arp->lock, K_FOREVER);
-		
+
 		switch (current_param) {
 		case ENCODER_PARAM_DRIFT: {
 			int new_drift = g_arp->drift_cycle + delta;
-			if (new_drift < 1) new_drift = 1;
-			if (new_drift > 96) new_drift = 96;
+			if (new_drift < 1) {
+				new_drift = 1;
+			}
+			if (new_drift > 96) {
+				new_drift = 96;
+			}
 			g_arp->drift_cycle = new_drift;
 			LOG_INF("Encoder: Drift Cycle set to %d", g_arp->drift_cycle);
 			break;
@@ -45,8 +51,12 @@ static void input_cb(struct input_event *evt, void *user_data)
 		case ENCODER_PARAM_MODE: {
 			/* Scroll through modes without applying yet */
 			int new_m = (int)pending_mode + delta;
-			if (new_m < 0) new_m = (int)ARP_MODE_MAX - 1;
-			if (new_m >= (int)ARP_MODE_MAX) new_m = 0;
+			if (new_m < 0) {
+				new_m = (int)ARP_MODE_MAX - 1;
+			}
+			if (new_m >= (int)ARP_MODE_MAX) {
+				new_m = 0;
+			}
 			pending_mode = (enum arp_mode)new_m;
 			LOG_INF("Encoder: Mode selection: %d (Pending)", pending_mode);
 			break;
@@ -61,7 +71,7 @@ static void input_cb(struct input_event *evt, void *user_data)
 		default:
 			break;
 		}
-		
+
 		k_mutex_unlock(&g_arp->lock);
 	} else if (evt->type == INPUT_EV_KEY) {
 		/* Track SHIFT state (D3 / INPUT_KEY_3) */
@@ -86,9 +96,9 @@ static void input_cb(struct input_event *evt, void *user_data)
 					arp_set_mode(g_arp, pending_mode);
 					LOG_INF("Encoder: Mode Applied: %d", g_arp->mode);
 				}
-				
+
 				current_param = (current_param + 1) % ENCODER_PARAM_MAX;
-				
+
 				if (current_param == ENCODER_PARAM_MODE) {
 					pending_mode = g_arp->mode;
 				}
