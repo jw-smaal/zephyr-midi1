@@ -19,9 +19,9 @@
  * @brief Parameters that can be controlled by the rotary encoder.
  */
 enum encoder_param {
-	ENCODER_PARAM_DRIFT = 0, /* Phase Drift Cycle */
-	ENCODER_PARAM_MODE = 1,  /* Arpeggiator Mode */
-	ENCODER_PARAM_BPM = 2,   /* BPM Adjustment */
+	ENCODER_PARAM_MODE = 0,  /* Arpeggiator Mode */
+	ENCODER_PARAM_BPM = 1,   /* BPM Adjustment */
+	ENCODER_PARAM_DRIFT = 2, /* Phase Drift Cycle */
 	ENCODER_PARAM_POLY_OFFSET = 3, /* Polymetric Length Offset */
 	ENCODER_PARAM_MAX = 4
 };
