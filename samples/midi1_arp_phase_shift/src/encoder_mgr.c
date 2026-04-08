@@ -58,6 +58,16 @@ static void input_cb(struct input_event *evt, void *user_data)
 			tempo_set_bpm(g_tempo, new_bpm);
 			break;
 		}
+		case ENCODER_PARAM_POLY_OFFSET: {
+			/* Restrict offset between -3 and 0 for safety */
+			int new_offset = g_arp->high.length_offset + delta;
+			if (new_offset < -3) new_offset = -3;
+			if (new_offset > 0) new_offset = 0;
+
+			g_arp->high.length_offset = new_offset;
+			LOG_INF("Encoder: Poly Offset set to %d", g_arp->high.length_offset);
+			break;
+		}
 		default:
 			break;
 		}

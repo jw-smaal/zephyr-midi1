@@ -40,6 +40,7 @@ struct arp_layer {
 	int clock_counter;
 	int drift_trigger_count;
 	bool lag_pending;
+	int length_offset;
 };
 
 struct arp_ctx {

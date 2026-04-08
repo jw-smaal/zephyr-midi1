@@ -46,6 +46,7 @@ void display_thread(void *p1, void *p2, void *p3)
 		uint8_t base_pitch;
 		uint8_t high_pitch;
 		int num_notes;
+		int poly_offset;
 		int drift_cycle;
 		enum encoder_param param;
 		bool shifted;
@@ -76,6 +77,7 @@ void display_thread(void *p1, void *p2, void *p3)
 		    g_arp->base.playing_pitch != last_state.base_pitch ||
 		    g_arp->high.playing_pitch != last_state.high_pitch ||
 		    g_arp->num_notes != last_state.num_notes ||
+		    g_arp->high.length_offset != last_state.poly_offset ||
 		    g_arp->drift_cycle != last_state.drift_cycle || current_p != last_state.param ||
 		    current_s != last_state.shifted || current_m != last_state.pending_mode) {
 
@@ -86,6 +88,7 @@ void display_thread(void *p1, void *p2, void *p3)
 			last_state.base_pitch = g_arp->base.playing_pitch;
 			last_state.high_pitch = g_arp->high.playing_pitch;
 			last_state.num_notes = g_arp->num_notes;
+			last_state.poly_offset = g_arp->high.length_offset;
 			last_state.drift_cycle = g_arp->drift_cycle;
 			last_state.param = current_p;
 			last_state.shifted = current_s;
@@ -130,7 +133,10 @@ void display_thread(void *p1, void *p2, void *p3)
 				 (last_state.param == ENCODER_PARAM_DRIFT ? '*' : ' '),
 				 last_state.drift_cycle);
 
-			snprintf(line4, sizeof(line4), "Notes: %d", last_state.num_notes);
+			/* Line 4: Share space between Notes and Poly Offset */
+			snprintf(line4, sizeof(line4), "%cPoly: %2d  (N:%d)",
+				 (last_state.param == ENCODER_PARAM_POLY_OFFSET ? '*' : ' '),
+				 last_state.poly_offset, last_state.num_notes);
 
 			/* Perform I2C transfer outside of mutex lock */
 			cfb_framebuffer_clear(display_dev, false);
