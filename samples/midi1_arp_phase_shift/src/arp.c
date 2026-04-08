@@ -21,10 +21,12 @@ void arp_init(struct arp_ctx *ctx, int interval, int drift_cycle)
 	ctx->base.index = 0;
 	ctx->base.clock_counter = 0;
 	ctx->base.playing_pitch = 0;
+	ctx->base.length_offset = 0;
 
 	ctx->high.index = 0;
 	ctx->high.clock_counter = 0;
 	ctx->high.playing_pitch = 0;
+	ctx->high.length_offset = 0;
 	ctx->high.drift_trigger_count = 0;
 	ctx->high.lag_pending = false;
 
@@ -221,12 +223,26 @@ struct arp_tick_result arp_tick(struct arp_ctx *ctx)
 		ctx->high.clock_counter = 0;
 		ctx->high.lag_pending = false;
 
+		/* Calculate effective polymetric length */
+		int effective_length = ctx->num_notes + ctx->high.length_offset;
+		if (effective_length < 1) effective_length = 1;
+		if (effective_length > ctx->num_notes) effective_length = ctx->num_notes;
+
 		if (is_process) {
 			/* High layer mirrored reverse window traversal */
 			ctx->high.index--;
-			/* Window boundaries for reverse: [N-1-offset-len+1, N-1-offset] */
-			int high_start = ctx->num_notes - 1 - ctx->process_offset;
+			/* Use effective length for process boundaries */
+			int high_start = effective_length - 1 - ctx->process_offset;
+
+			/* Prevent underflow if offset exceeds effective length */
+			if (high_start < 0) {
+				high_start = 0;
+			}
+
 			int high_end = high_start - ctx->process_len + 1;
+			if (high_end < 0) {
+				high_end = 0;
+			}
 
 			if (ctx->high.index < high_end) {
 				ctx->high.index = high_start;
@@ -237,7 +253,11 @@ struct arp_tick_result arp_tick(struct arp_ctx *ctx)
 			}
 		} else {
 			if (--ctx->high.index < 0) {
-				ctx->high.index = ctx->num_notes - 1;
+				ctx->high.index = effective_length - 1;
+			}
+			/* Catch bounds if offset changes dynamically */
+			if (ctx->high.index >= effective_length) {
+				ctx->high.index = effective_length - 1;
 			}
 		}
 
