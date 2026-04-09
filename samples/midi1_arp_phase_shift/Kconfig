@@ -32,11 +32,6 @@ config MIDI1_ARP_TEMPO_MAXIMUM
     default 30000 
     range 100 30000
 
-config MIDI1_ARP_TEMPO_DEADBAND
-	int "The ADC can be noisy don't change the tempo unless it has changed more than this" 
-	default 50
-	range 1 500
-
 endmenu
 
 source "Kconfig.zephyr"

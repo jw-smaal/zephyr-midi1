@@ -69,6 +69,11 @@
 			gpios = <&arduino_header 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D2 */
 			label = "Encoder Push Button";
 			zephyr,code = <INPUT_KEY_2>;
-		};
+                };
+
+                button1: button_1 {
+                        gpios = <&arduino_header 16 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D10 */
+                        label = "BPM Shift Button";
+                        zephyr,code = <INPUT_KEY_3>;		};
 	};
 };
