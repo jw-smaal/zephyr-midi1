@@ -15,6 +15,10 @@ Available Samples
 - **midi1_serial**: Basic MIDI serial UART transmit/receive example.
 - **midi1_clock_generator**: Demonstrates how to generate MIDI timing clock pulses (24 PPQN) at a specific BPM.
 - **midi1_clock_measurement**: Shows how to measure the BPM of an incoming MIDI clock signal.
+- **midi1_arp**: Simple MIDI arpeggiator.
+- **midi1_octave_arp**: Arpeggiator with octave shifting.
+- **midi1_super_arp**: Advanced arpeggiator with complex patterns.
+- **midi1_arp_phase_shift**: Arpeggiator demonstrating phase shifting between notes.
 
 How to build
 ************
@@ -25,4 +29,4 @@ To build any of these samples, use the following ``west`` command from your Zeph
 
    west build -b <your_board> modules/lib/midi1/samples/<sample_name>
 
-Replace ``<your_board>`` with your target board (e.g., ``frdm_k64f``) and ``<sample_name>`` with the desired sample directory.
+Replace ``<your_board>`` with your target board (e.g., ``frdm_mcxc242``) and ``<sample_name>`` with the desired sample directory.

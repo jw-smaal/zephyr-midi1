@@ -42,7 +42,7 @@ From your Zephyr workspace:
 Running
 *******
 
-Once flashed, the sample will monitor the incoming timing clock and report the measured BPM every 2 seconds via the console.
+Once flashed, the sample will monitor the incoming timing clock and report the measured BPM every 1 second via the console.
 
 License
 *******

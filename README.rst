@@ -12,7 +12,7 @@ A standalone Zephyr RTOS module providing MIDI 1.0 drivers and protocol helpers.
 Features
 ********
 
-- **MIDI Serial UART Driver**: Supports MIDI 1.0 over UART with "Running Status" support (transmit and receive) and thread-safe mutex protection for multi-threaded applications.
+- **MIDI Serial UART Driver**: Supports MIDI 1.0 over UART with prioritized interrupt-driven TX, "Running Status" support, and thread-safe mutex protection for multi-threaded applications.
 - **MIDI Clock Generator**: Hardware-based MIDI clock (24 PPQN) generation.
 - **MIDI Clock Measurement**: Measures BPM of incoming clock pulses with block averaging.
 - **Universal MIDI Packet (UMP)**: Helpers for generating MIDI 1.0 UMP packets.
@@ -80,8 +80,8 @@ Example for defining a MIDI serial instance in your Devicetree overlay:
 .. code-block:: dts
 
    / {
-       midi_serial_0: midi1-serial-0 {
-           compatible = "midi1-serial";
+       midi_serial_0: midi1_serial-0 {
+           compatible = "midi1_serial";
            uart = <&uart3>;
            status = "okay";
        };
