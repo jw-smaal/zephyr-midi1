@@ -178,8 +178,8 @@ Here are some basic examples demonstrating how to use the drivers in your code.
        return 0;
    }
 
-
-**3.  ARP phase shift sample 
+Showcase
+********
 
 This sample midi1_arp_phase_shift uses both the clock generation and advanced 
 ARP showcasing the full driver api. 
