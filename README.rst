@@ -21,7 +21,7 @@ Features
    :alt: MIDI 1.0 Interface for 3.3V
    :align: center
 
-   Typical MIDI 1.0 Interface for 3.3V MCUs.
+   Custom MIDI DIN Interface for 3.3V MCUs.
 
 Integration via West
 ********************
@@ -110,8 +110,8 @@ Example for defining a MIDI serial instance in your Devicetree overlay:
    };
 
    /*
-    * Because on the FRDM_K64F each channel has its own IRQ we need to be
-    * specific here; we can't just enable pit0 and hope for the best.
+    * Because on the FRDM_K64F each channel has its own IRQ we need to enable 
+    * all three. 
     */
    &pit0 {
        status = "okay";
@@ -148,6 +148,7 @@ Here are some basic examples demonstrating how to use the drivers in your code.
        mid->note_on(midi_dev, CH1, 60, 100);
 
        /* ... wait ... */
+       k_sleep(K_MSEC(310));
 
        /* Send Note Off: Channel 1, Note 60, Velocity 0 */
        mid->note_off(midi_dev, CH1, 60, 0);
@@ -176,6 +177,20 @@ Here are some basic examples demonstrating how to use the drivers in your code.
 
        return 0;
    }
+
+
+**3.  ARP phase shift sample 
+
+This sample midi1_arp_phase_shift uses both the clock generation and advanced 
+ARP showcasing the full driver api. 
+
+.. figure:: documentation/MIDI1_arp_phase_shift.png
+   :alt: MIDI ARP with phase shift sample
+   :align: center
+
+   ARP phase shift sample showing custom 3.3v interface for DIN5 MIDI.
+
+
 
 License
 *******
