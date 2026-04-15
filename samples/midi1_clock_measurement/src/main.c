@@ -34,6 +34,7 @@ static void midi1_realtime_callback(uint8_t msg)
 int main(void)
 {
 	const struct device *midi_serial = DEVICE_DT_GET_ANY(midi1_serial);
+	const struct midi1_clock_meas_cntr_api *meas_api;
 	char bpm_str[16];
 	struct midi1_serial_callbacks cb = {0};
 
@@ -43,6 +44,8 @@ int main(void)
 		LOG_ERR("Required devices not found in devicetree");
 		return -ENODEV;
 	}
+
+	meas_api = (const struct midi1_clock_meas_cntr_api *)meas_dev->api;
 
 	if (!device_is_ready(meas_dev)) {
 		LOG_ERR("MIDI measurement device %s is not ready", meas_dev->name);
@@ -69,8 +72,8 @@ int main(void)
 
 		int64_t now = k_uptime_get();
 		if (now - last_log_time >= 1000) {
-			if (midi1_clock_meas_cntr_is_valid(meas_dev)) {
-				uint16_t current_bpm = midi1_clock_meas_cntr_get_sbpm(meas_dev);
+			if (meas_api->is_valid(meas_dev)) {
+				uint16_t current_bpm = meas_api->get_sbpm(meas_dev);
 				sbpm_to_str(current_bpm, bpm_str, sizeof(bpm_str));
 				LOG_INF("Incoming Clock: %s BPM", bpm_str);
 			} else {
