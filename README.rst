@@ -17,6 +17,12 @@ Features
 - **MIDI Clock Measurement**: Measures BPM of incoming clock pulses with block averaging.
 - **Universal MIDI Packet (UMP)**: Helpers for generating MIDI 1.0 UMP packets.
 
+.. figure:: documentation/MIDI1_interface_for_3v3.png
+   :alt: MIDI 1.0 Interface for 3.3V
+   :align: center
+
+   Typical MIDI 1.0 Interface for 3.3V MCUs.
+
 Integration via West
 ********************
 
