@@ -1,0 +1,8 @@
+2026-04-22 21:11:27,841 - twister - INFO - Using Ninja..
+2026-04-22 21:11:28,078 - twister - INFO - Zephyr version: v4.4.0-630-gd95d79dc9371
+2026-04-22 21:11:28,164 - twister - DEBUG - Running cmake script C:\Users\jws\zephyrproject\zephyr\cmake\verify-toolchain.cmake
+2026-04-22 21:11:28,164 - twister - DEBUG - Calling cmake: ['C:\\Program Files\\CMake\\bin\\cmake.EXE', '-DFORMAT=json', '-P', 'C:\\Users\\jws\\zephyrproject\\zephyr\\cmake\\verify-toolchain.cmake']
+2026-04-22 21:11:29,221 - twister - DEBUG - Finished running C:\Users\jws\zephyrproject\zephyr\cmake\verify-toolchain.cmake
+2026-04-22 21:11:29,221 - twister - INFO - Using 'zephyr/gnu' toolchain variant.
+2026-04-22 21:11:31,848 - twister - DEBUG - Reading testsuite configuration files under C:\Users\jws\zephyrproject\WORK-GIT\zephyr-midi1\tests\lib\midi1_parser\tests\lib\midi1_parser...
+2026-04-22 21:11:31,861 - twister - ERROR - No testsuites found at the specified location...

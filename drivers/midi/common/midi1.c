@@ -140,6 +140,40 @@ struct midi_ump midi1_reset(void)
 	return UMP_SYS_RT_COMMON(UMP_CHANNEL_GROUP, RT_RESET, 0, 0);
 }
 
+struct midi_ump midi1_sysex7(uint8_t group, uint8_t status, uint8_t count, const uint8_t *data)
+{
+	struct midi_ump ump = {0};
+
+	/* Message Type 3 (Data 64-bit / SysEx7) */
+	ump.data[0] = (uint32_t)UMP_MT_DATA_64 << 28;
+	ump.data[0] |= (uint32_t)(group & 0x0F) << 24;
+	ump.data[0] |= (uint32_t)(status & 0x0F) << 20;
+	ump.data[0] |= (uint32_t)(count & 0x0F) << 16;
+
+	if (count > 0 && data != NULL) {
+		if (count >= 1) {
+			ump.data[0] |= (uint32_t)(data[0] & 0x7F) << 8;
+		}
+		if (count >= 2) {
+			ump.data[0] |= (uint32_t)(data[1] & 0x7F);
+		}
+		if (count >= 3) {
+			ump.data[1] |= (uint32_t)(data[2] & 0x7F) << 24;
+		}
+		if (count >= 4) {
+			ump.data[1] |= (uint32_t)(data[3] & 0x7F) << 16;
+		}
+		if (count >= 5) {
+			ump.data[1] |= (uint32_t)(data[4] & 0x7F) << 8;
+		}
+		if (count >= 6) {
+			ump.data[1] |= (uint32_t)(data[5] & 0x7F);
+		}
+	}
+
+	return ump;
+}
+
 /*
  *------------------------------------------------------------------------------
  * MIDI tempo helpers.

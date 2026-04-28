@@ -1,0 +1,13 @@
+/* Board specific overlay for FRDM-RW612 */
+/ {
+	midi1_serial0: midi1_serial_0 {
+		compatible = "midi1_serial";
+		uart = <&flexcomm0>;
+		status = "okay";
+	};
+};
+
+&flexcomm0 {
+	status = "okay";
+	current-speed = <31250>;
+};

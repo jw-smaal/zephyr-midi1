@@ -86,6 +86,11 @@ struct midi1_serial_callbacks {
 	void (*sysex_start)(void);
 	void (*sysex_data)(uint8_t data);
 	void (*sysex_stop)(void);
+
+	/**
+	 * @brief Universal MIDI Packet (UMP) callback
+	 */
+	void (*ump_cb)(const struct device *dev, const struct midi_ump ump);
 };
 
 struct midi1_serial_data {
@@ -134,6 +139,12 @@ struct midi1_serial_data {
 	 */
 	bool in_sysex;
 
+	/*
+	 * UMP SysEx7 accumulation
+	 */
+	uint8_t sysex_ump_buf[6];
+	uint8_t sysex_ump_count;
+	bool sysex_ump_started;
 
 	/*
 	 * Must be filled by the application after init.
@@ -150,6 +161,7 @@ struct midi1_serial_api {
 	 */
 	int (*register_callbacks)(const struct device *dev, struct midi1_serial_callbacks *cb);
 	void (*receiveparser)(const struct device *dev);
+	void (*receiveparser_ump)(const struct device *dev);
 	/*
 	 * -- == Transmit == --
 	 */
@@ -220,6 +232,14 @@ int midi1_serial_register_callbacks(const struct device *dev, struct midi1_seria
  * @param *dev MIDI1.0 device serial instance.
  */
 void midi1_serial_receiveparser(const struct device *dev);
+
+/**
+ * @brief this needs to be called in a loop to process the received MIDI1
+ * and return it as UMP packets via the ump_cb callback.
+ *
+ * @param *dev MIDI1.0 device serial instance.
+ */
+void midi1_serial_receiveparser_ump(const struct device *dev);
 
 /* Channel mode messages */
 /* ___ _                       _   __  __         _
@@ -432,6 +452,17 @@ void midi1_sysex_data_bulk(const struct device *dev, const uint8_t *data, uint32
  * @param *dev MIDI1.0 device serial instance.
  */
 void midi1_sysex_stop(const struct device *dev);
+
+/**
+ * @brief Send a UMP packet out as MIDI 1.0 bytes over Serial.
+ *
+ * This function translates a UMP packet (MT 0x1, 0x2, 0x3)
+ * back into the MIDI 1.0 byte stream.
+ *
+ * @param *dev MIDI1.0 device serial instance.
+ * @param ump The Universal MIDI Packet to send.
+ */
+void midi1_serial_send_ump(const struct device *dev, const struct midi_ump ump);
 
 #endif /* MIDI1_SERIAL_H */
 /* EOF */

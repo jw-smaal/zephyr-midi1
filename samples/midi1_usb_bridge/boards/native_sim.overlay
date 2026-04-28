@@ -1,0 +1,8 @@
+/* Board specific overlay for native_sim */
+/ {
+	midi1_serial0: midi1_serial_0 {
+		compatible = "midi1_serial";
+		uart = <&uart0>;
+		status = "okay";
+	};
+};

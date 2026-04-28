@@ -1,0 +1,15 @@
+/ {
+	usb_midi: usb_midi {
+		compatible = "zephyr,midi2-device";
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		gtb0: gtb@0 {
+			reg = <0 1>;
+			terminal-type = "bidirectional";
+			protocol = "midi1-up-to-64b";
+			serial-31250bps;
+		};
+	};
+};

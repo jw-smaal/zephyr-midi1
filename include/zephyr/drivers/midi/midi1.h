@@ -287,6 +287,26 @@ struct midi_ump midi1_active_sensing(void);
  */
 struct midi_ump midi1_reset(void);
 
+/**
+ * @brief Universal MIDI Packet (UMP) status for Data Messages (MT=3)
+ * @{
+ */
+#define UMP_SYSEX7_STATUS_COMPLETE UMP_STREAM_FORMAT_COMPLETE
+#define UMP_SYSEX7_STATUS_START    UMP_STREAM_FORMAT_START
+#define UMP_SYSEX7_STATUS_CONTINUE UMP_STREAM_FORMAT_CONTINUE
+#define UMP_SYSEX7_STATUS_END      UMP_STREAM_FORMAT_END
+/** @} */
+
+/**
+ * @brief create MIDI SysEx7 Universal MIDI packet (UMP) - MT=3
+ * @param group UMP group (0-15)
+ * @param status UMP SysEx7 status (Start, Continue, End, Complete)
+ * @param count number of data bytes (0-6)
+ * @param data pointer to data bytes
+ * @return midi_ump universal MIDI packet
+ */
+struct midi_ump midi1_sysex7(uint8_t group, uint8_t status, uint8_t count, const uint8_t *data);
+
 /*
  *------------------------------------------------------------------------------
  * MIDI tempo helpers.

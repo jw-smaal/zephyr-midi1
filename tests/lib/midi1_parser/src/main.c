@@ -27,6 +27,12 @@ static uint8_t last_velocity;
 static uint8_t last_realtime;
 
 /*
+ * UMP test globals
+ */
+static uint32_t ump_cb_count;
+static struct midi_ump last_ump;
+
+/*
  * Callbacks
  */
 static uint32_t song_pos_count;
@@ -95,6 +101,12 @@ static void test_sysex_stop(void)
 	sysex_stop_count++;
 }
 
+static void test_ump_cb(const struct device *dev, const struct midi_ump ump)
+{
+	ump_cb_count++;
+	last_ump = ump;
+}
+
 static void noop_u8(uint8_t val)
 {
 }
@@ -112,6 +124,7 @@ static void reset_counters(void)
 	channel_aftertouch_count = 0;
 	mtc_count = 0;
 	tune_request_count = 0;
+	ump_cb_count = 0;
 	memset(&test_data, 0, sizeof(test_data));
 	k_msgq_init(&test_data.msgq, test_data.msgq_buffer, MSG_SIZE, MSGQ_SIZE);
 	test_data.cb.note_on = test_note_on;
@@ -126,6 +139,7 @@ static void reset_counters(void)
 	test_data.cb.channel_aftertouch = test_channel_aftertouch;
 	test_data.cb.mtc_quarter_frame = test_mtc_quarter_frame;
 	test_data.cb.tune_request = test_tune_request;
+	test_data.cb.ump_cb = test_ump_cb;
 }
 
 static void inject_byte(uint8_t b)
@@ -448,6 +462,52 @@ ZTEST(midi1_parser, test_tx_running_status_reinsertion)
 	zassert_equal(tx_buf[0], 0x90, "First byte should be status");
 	zassert_equal(tx_buf[31], 0x90,
 		      "32nd byte should be re-inserted status (3 + 14*2 = 31 index)");
+}
+
+/**
+ * @brief Test UMP parser with Note On
+ */
+ZTEST(midi1_parser, test_ump_note_on)
+{
+	reset_counters();
+	inject_byte(0x90);
+	inject_byte(0x3C);
+	inject_byte(0x40);
+
+	for (int i = 0; i < 3; i++) {
+		midi1_serial_receiveparser_ump(&test_dev);
+	}
+
+	zassert_equal(ump_cb_count, 1, "Should have 1 UMP callback");
+	zassert_equal(UMP_MT(last_ump), UMP_MT_MIDI1_CHANNEL_VOICE, "Wrong MT");
+	zassert_equal(UMP_MIDI_COMMAND(last_ump), UMP_MIDI_NOTE_ON, "Wrong Command");
+	zassert_equal(UMP_MIDI1_P1(last_ump), 0x3C, "Wrong note");
+	zassert_equal(UMP_MIDI1_P2(last_ump), 0x40, "Wrong velocity");
+}
+
+/**
+ * @brief Test UMP parser with SysEx (Multiple packets)
+ */
+ZTEST(midi1_parser, test_ump_sysex_long)
+{
+	reset_counters();
+	/* F0, 01, 02, 03, 04, 05, 06, 07, 08, F7 */
+	/* Should result in:
+	 * 1. START (6 bytes: 01, 02, 03, 04, 05, 06)
+	 * 2. END (2 bytes: 07, 08)
+	 */
+	inject_byte(0xF0);
+	for (uint8_t i = 1; i <= 8; i++) {
+		inject_byte(i);
+	}
+	inject_byte(0xF7);
+
+	/* 10 bytes total */
+	for (int i = 0; i < 10; i++) {
+		midi1_serial_receiveparser_ump(&test_dev);
+	}
+
+	zassert_equal(ump_cb_count, 2, "Should have 2 UMP callbacks for SysEx");
 }
 
 ZTEST_SUITE(midi1_parser, NULL, NULL, NULL, NULL, NULL);

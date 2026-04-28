@@ -3,6 +3,14 @@
 config MIDI1_SERIAL
     bool "MIDI1 serial UART driver"
     default n
+    depends on DT_HAS_MIDI1_SERIAL_ENABLED
+    select SERIAL
+    select UART_INTERRUPT_DRIVEN
+    select RING_BUFFER
+    help
+      Enable the MIDI 1.0 Serial (UART) driver. This driver provides
+      bidirectional MIDI 1.0 communication over a UART device using
+      interrupt-driven I/O and optional running status.
 
 config MIDI1_SERIAL_CHANNEL
     int "MIDI channel to use (1-16)"
