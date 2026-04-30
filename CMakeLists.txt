@@ -9,4 +9,8 @@ if(ZEPHYR_BASE)
   add_subdirectory(drivers/midi/serial)
   add_subdirectory(drivers/midi/clock)
   add_subdirectory(drivers/midi/measurement)
+  
+  if(CONFIG_MIDI1_HARMONIC)
+    add_subdirectory(lib/harmonic)
+  endif()
 endif()

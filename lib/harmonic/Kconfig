@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config MIDI1_HARMONIC
+	bool "MIDI1 harmonic information module"
+	default y
+	help
+	  Enable the harmonic information module which provides
+	  data and functions for scales, chords, and notes.

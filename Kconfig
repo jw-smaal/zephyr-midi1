@@ -5,5 +5,6 @@ menu "MIDI 1.0 Support"
 rsource "drivers/midi/serial/Kconfig"
 rsource "drivers/midi/clock/Kconfig"
 rsource "drivers/midi/measurement/Kconfig"
+rsource "lib/harmonic/Kconfig"
 
 endmenu
