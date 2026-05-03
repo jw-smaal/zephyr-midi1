@@ -24,7 +24,7 @@
 #include <zephyr/logging/log.h>
 
 /* In order to print out the note names (e.g., C4, D#5) */
-#include "note.h"
+#include <zephyr/midi1/note.h>
 
 LOG_MODULE_REGISTER(midi1_super_arp_sample, LOG_LEVEL_INF);
 
@@ -333,7 +333,7 @@ K_THREAD_DEFINE(midi1_serial_receive_tid, 1024, midi1_serial_receive_thread, NUL
 int main(void)
 {
 	/* 1. Retrieve device pointers from Devicetree */
-	midi_serial = DEVICE_DT_GET(DT_NODELABEL(midi1));
+	midi_serial = DEVICE_DT_GET_ANY(midi1_serial);
 	midi_clock = DEVICE_DT_GET_ANY(midi1_clock_cntr);
 
 	/* 2. Verify hardware readiness */
@@ -386,7 +386,7 @@ int main(void)
 		/* Print out the current buffer of notes with their velocities */
 		for (uint8_t i = 0; i < num_active_notes; i++) {
 			LOG_INF("[%d]: %s (Vel: %d)", i,
-				noteToTextWithOctave(notes[i].note, false),
+				harm_note_to_text_with_octave(notes[i].note, false),
 				notes[i].velocity);
 		}
 		

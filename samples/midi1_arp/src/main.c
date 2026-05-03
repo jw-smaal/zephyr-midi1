@@ -22,7 +22,7 @@
 #include <zephyr/logging/log.h>
 
 /* In order to print out the note names (e.g., C4, D#5) */
-#include "note.h"
+#include <zephyr/midi1/note.h>
 
 LOG_MODULE_REGISTER(midi1_arp_sample, LOG_LEVEL_INF);
 
@@ -285,7 +285,7 @@ int main(void)
 		/* Print out the current buffer of notes with their velocities */
 		for (uint8_t i = 0; i < num_active_notes; i++) {
 			LOG_INF("[%d]: %s (Vel: %d)", i,
-				noteToTextWithOctave(notes[i].note, false),
+				harm_note_to_text_with_octave(notes[i].note, false),
 				notes[i].velocity);
 		}
 		

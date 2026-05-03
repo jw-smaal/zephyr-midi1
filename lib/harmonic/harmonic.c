@@ -21,7 +21,7 @@ static const char *note_names_flats[] = {
 #define NOTES_PER_OCTAVE 12u
 #define MASK_12BIT_LIMIT 0x0FFFu
 
-bool harmonic_is_note_in_mask(uint8_t note, harmonic_mask_t mask, uint8_t root)
+bool harm_is_note_in_mask(uint8_t note, harm_mask_t mask, uint8_t root)
 {
 	uint8_t note_in_octave = note % NOTES_PER_OCTAVE;
 	int8_t relative_note = (int8_t)note_in_octave - (int8_t)(root % NOTES_PER_OCTAVE);
@@ -33,7 +33,7 @@ bool harmonic_is_note_in_mask(uint8_t note, harmonic_mask_t mask, uint8_t root)
 	return (mask & (1u << (uint8_t)relative_note)) != 0;
 }
 
-harmonic_mask_t harmonic_transpose_mask(harmonic_mask_t mask, uint8_t semitones)
+harm_mask_t harm_transpose_mask(harm_mask_t mask, uint8_t semitones)
 {
 	uint8_t shift = semitones % NOTES_PER_OCTAVE;
 	if (shift == 0) {
@@ -41,13 +41,13 @@ harmonic_mask_t harmonic_transpose_mask(harmonic_mask_t mask, uint8_t semitones)
 	}
 
 	/* Rotate bits: (mask << shift) | (mask >> (12 - shift)) */
-	harmonic_mask_t high = (mask << shift) & MASK_12BIT_LIMIT;
-	harmonic_mask_t low = (mask >> (NOTES_PER_OCTAVE - shift)) & MASK_12BIT_LIMIT;
+	harm_mask_t high = (mask << shift) & MASK_12BIT_LIMIT;
+	harm_mask_t low = (mask >> (NOTES_PER_OCTAVE - shift)) & MASK_12BIT_LIMIT;
 	
 	return (high | low);
 }
 
-harmonic_mask_t harmonic_rotate_mask(harmonic_mask_t mask, uint8_t new_root_index)
+harm_mask_t harm_rotate_mask(harm_mask_t mask, uint8_t new_root_index)
 {
 	uint8_t count = 0;
 	uint8_t shift = 0;
@@ -69,13 +69,13 @@ harmonic_mask_t harmonic_rotate_mask(harmonic_mask_t mask, uint8_t new_root_inde
 	}
 
 	/* Rotate so bit 'shift' becomes bit 0 */
-	harmonic_mask_t low = (mask >> shift) & MASK_12BIT_LIMIT;
-	harmonic_mask_t high = (mask << (NOTES_PER_OCTAVE - shift)) & MASK_12BIT_LIMIT;
+	harm_mask_t low = (mask >> shift) & MASK_12BIT_LIMIT;
+	harm_mask_t high = (mask << (NOTES_PER_OCTAVE - shift)) & MASK_12BIT_LIMIT;
 
 	return (low | high);
 }
 
-const char *harmonic_get_note_name(uint8_t note, bool use_sharps)
+const char *harm_get_note_name(uint8_t note, bool use_sharps)
 {
 	uint8_t note_in_octave = note % NOTES_PER_OCTAVE;
 	if (use_sharps) {
@@ -85,10 +85,10 @@ const char *harmonic_get_note_name(uint8_t note, bool use_sharps)
 	}
 }
 
-uint8_t harmonic_get_mask_note_count(harmonic_mask_t mask)
+uint8_t harm_get_mask_note_count(harm_mask_t mask)
 {
 	uint8_t count = 0;
-	harmonic_mask_t m = mask & MASK_12BIT_LIMIT;
+	harm_mask_t m = mask & MASK_12BIT_LIMIT;
 
 	while (m != 0) {
 		m &= (m - 1);

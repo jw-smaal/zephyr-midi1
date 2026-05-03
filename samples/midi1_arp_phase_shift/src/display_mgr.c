@@ -17,7 +17,7 @@
 #include <stdio.h>
 
 #include "display_mgr.h"
-#include "note.h"
+#include <zephyr/midi1/note.h>
 #include "encoder_mgr.h"
 
 LOG_MODULE_REGISTER(display_mgr, LOG_LEVEL_WRN);

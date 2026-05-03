@@ -18,7 +18,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
-#include "note.h"
+#include <zephyr/midi1/note.h>
 #include "arp.h"
 #include "tempo.h"
 #include "display_mgr.h"
@@ -267,9 +267,9 @@ int main(void)
 			int pos = 0;
 
 			snprintf(now_base, sizeof(now_base), "%s",
-				 noteToTextWithOctave(arp.base.playing_pitch, false));
+				 harm_note_to_text_with_octave(arp.base.playing_pitch, false));
 			snprintf(now_high, sizeof(now_high), "%s",
-				 noteToTextWithOctave(arp.high.playing_pitch, false));
+				 harm_note_to_text_with_octave(arp.high.playing_pitch, false));
 
 			for (int i = 0; i < arp.num_notes; i++) {
 				uint8_t h = (arp.notes[i].pitch + 12 <= 127)
@@ -277,9 +277,9 @@ int main(void)
 						    : 127;
 
 				snprintf(base_str, sizeof(base_str), "%s",
-					 noteToTextWithOctave(arp.notes[i].pitch, false));
+					 harm_note_to_text_with_octave(arp.notes[i].pitch, false));
 				snprintf(high_str, sizeof(high_str), "%s",
-					 noteToTextWithOctave(h, false));
+					 harm_note_to_text_with_octave(h, false));
 
 				pos += snprintf(chord_buf + pos, sizeof(chord_buf) - pos,
 						"[%s->%s] ", base_str, high_str);

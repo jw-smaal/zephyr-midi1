@@ -12,24 +12,23 @@
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @updated 20241224
  */
-#include "note.h"
+#include <zephyr/midi1/note.h>
 
 /*
  * Return the note with the octave included.
- * not thread safe.
  */
-const char *noteToTextWithOctave(uint8_t midinote, bool flats)
+const char *harm_note_to_text_with_octave(uint8_t midinote, bool flats)
 {
-	static char notestring[5];
-	snprintf(notestring, sizeof(notestring), "%s%d", noteToText(midinote, flats),
-		 noteToOct(midinote));
+	static char notestring[8];
+	snprintf(notestring, sizeof(notestring), "%s%d", harm_note_to_text(midinote, flats),
+		 harm_note_to_oct(midinote));
 	return &notestring[0];
 }
 
 /* This function converts a MIDI note using a lookup table to a string */
-const char *noteToText(uint8_t midinote, bool flats)
+const char *harm_note_to_text(uint8_t midinote, bool flats)
 {
-	int octave = noteToOct(midinote);
+	int octave = harm_note_to_oct(midinote);
 	uint8_t note = midinote - ((octave + 2) * 12);
 	static const char *flatNotes[] = {"C ", "Db", "D ", "Eb", "E ", "F ",
 					  "Gb", "G ", "Ab", "A ", "Bb", "B "};
@@ -49,50 +48,23 @@ const char *noteToText(uint8_t midinote, bool flats)
 /*
  * This function converts a MIDI note to an octave number
  */
-int noteToOct(uint8_t midinote)
+int harm_note_to_oct(uint8_t midinote)
 {
 	return (midinote / 12) - 2;
 }
-
-#if TODO_USING_MATH
-/*
- * This function converts a MIDI note to a frequency
- * it can use a custom pitch for the A4 note.
- * TODO: implement in MCU friendly way....
- */
-float noteToFreqCustomA4(uint8_t midinote, int base_a4_note_freq)
-{
-	return base_a4_note_freq * pow(2, (midinote - 69) / 12.0);
-}
-#endif
 
 /**
  * In this case on my embedded system I don't want to run the
  * pow() match functions I use a precomputed lookup table.
  * A=440Hz is a given then.
- * TODO: possibly create multiple tables with some
- * TODO: variation in pitch of A4.  Flash size tradeoff.
  */
-#include "midi_freq_table.h"
-float noteToFreq(uint8_t midinote)
+float harm_note_to_freq(uint8_t midinote)
 {
+	if (midinote > 127) {
+		return 0.0f;
+	}
 	return midi_freq_table[midinote];
 }
-
-#if TODO_USING_MATH
-uint8_t freqToMidiNote(float freq)
-{
-	/* Fast inverse using log2f */
-	float n = 69.0f + 12.0f * log2f(freq / BASE_A4_NOTE_FREQ);
-	if (n < 0) {
-		n = 0;
-	}
-	if (n > 127) {
-		n = 127;
-	}
-	return (uint8_t)(n + 0.5f);
-}
-#endif
 
 /**
  * @brief Convert a frequency value to the nearest MIDI note number.
@@ -102,10 +74,8 @@ uint8_t freqToMidiNote(float freq)
  *
  * @param freq  Input frequency in Hz
  * @return      MIDI note number (0–127) that best matches the frequency
- *
- * TODO update for MIDI 2.0 to include per note offsets.
  */
-uint8_t freqToMidiNote(float freq)
+uint8_t harm_freq_to_midi_note(float freq)
 {
 	int min = 0;
 	int max = 127;
@@ -137,5 +107,3 @@ uint8_t freqToMidiNote(float freq)
 
 	return (freq - low < high - freq) ? (min - 1) : min;
 }
-
-/* EOF */

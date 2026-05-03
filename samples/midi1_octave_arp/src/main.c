@@ -22,7 +22,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 
-#include "note.h"
+#include <zephyr/midi1/note.h>
 
 LOG_MODULE_REGISTER(midi1_octave_arp_sample, LOG_LEVEL_INF);
 

@@ -21,7 +21,7 @@ LOG_MODULE_REGISTER(midi_reactive, LOG_LEVEL_INF);
 
 static const struct device *midi_dev;
 static uint8_t current_mod_wheel = 0;
-static harmonic_mask_t current_scale = HARMONIC_MASK_MAJOR;
+static harm_mask_t current_scale = HARM_MASK_MAJOR;
 
 /* Callback when a Note On is received */
 static void midi_note_on_cb(uint8_t channel, uint8_t note, uint8_t velocity)
@@ -62,19 +62,19 @@ static void midi_cc_cb(uint8_t channel, uint8_t controller, uint8_t value)
 		
 		/* Switch scale based on Mod Wheel value */
 		if (value == 0) {
-			current_scale = HARMONIC_MASK_MAJOR;
+			current_scale = HARM_MASK_MAJOR;
 			LOG_INF("Scale switched to MAJOR");
 		} else if (value >= 1 && value <= 32) {
-			current_scale = HARMONIC_MASK_NATURAL_MINOR;
+			current_scale = HARM_MASK_NATURAL_MINOR;
 			LOG_INF("Scale switched to NATURAL MINOR");
 		} else if (value >= 33 && value <= 64) {
-			current_scale = HARMONIC_MASK_DORIAN;
+			current_scale = HARM_MASK_DORIAN;
 			LOG_INF("Scale switched to DORIAN");
 		} else if (value >= 65 && value <= 96) {
-			current_scale = HARMONIC_MASK_BLUES;
+			current_scale = HARM_MASK_BLUES;
 			LOG_INF("Scale switched to BLUES");
 		} else {
-			current_scale = HARMONIC_MASK_CHROMATIC;
+			current_scale = HARM_MASK_CHROMATIC;
 			LOG_INF("Scale switched to CHROMATIC");
 		}
 	}

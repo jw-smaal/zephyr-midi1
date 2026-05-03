@@ -18,7 +18,7 @@
 #include <zephyr/drivers/midi/midi1_serial.h>
 
 /* Some helpers to print out the note name */
-#include "note.h"
+#include <zephyr/midi1/note.h>
 
 /* Via Kconfig (menuconfig) the channel can be set */ 
 #define MY_MIDI1_CHAN (CONFIG_MIDI1_SERIAL_CHANNEL - 1)
@@ -34,13 +34,13 @@
  */
 void note_on_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 {
-	printk("Note  on: %s %03d %03d\n", noteToTextWithOctave(note, false),
+	printk("Note  on: %s %03d %03d\n", harm_note_to_text_with_octave(note, false),
 	       note, velocity);
 }
 
 void note_off_handler(uint8_t channel, uint8_t note, uint8_t velocity)
 {
-	printk("Note off: %s %03d %03d\n", noteToTextWithOctave(note, false),
+	printk("Note off: %s %03d %03d\n", harm_note_to_text_with_octave(note, false),
 	       note, velocity);
 }
 

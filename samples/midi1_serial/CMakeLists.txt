@@ -15,5 +15,5 @@ FILE(GLOB app_sources src/*.c)
 target_include_directories(app PRIVATE)
 
 target_sources(app PRIVATE 
-	${app_sources}
+	src/main.c
 )
