@@ -16,10 +16,10 @@
 
 LOG_MODULE_REGISTER(midi_reactive, LOG_LEVEL_INF);
 
-#define MOD_WHEEL_CC 1
+#define MOD_WHEEL_CC     1
 #define NOTES_PER_OCTAVE 12u
 
-static const struct device *midi_dev;
+const struct device *midi_dev;
 static uint8_t current_mod_wheel = 0;
 static harm_mask_t current_scale = HARM_MASK_MAJOR;
 
@@ -59,7 +59,7 @@ static void midi_cc_cb(uint8_t channel, uint8_t controller, uint8_t value)
 {
 	if (controller == MOD_WHEEL_CC) {
 		current_mod_wheel = value;
-		
+
 		/* Switch scale based on Mod Wheel value */
 		if (value == 0) {
 			current_scale = HARM_MASK_MAJOR;
@@ -81,7 +81,7 @@ static void midi_cc_cb(uint8_t channel, uint8_t controller, uint8_t value)
 }
 
 /* MIDI callback structure */
-static const struct midi1_serial_callbacks midi_cbs = {
+const struct midi1_serial_callbacks midi_cbs = {
 	.note_on = midi_note_on_cb,
 	.note_off = midi_note_off_cb,
 	.control_change = midi_cc_cb,
@@ -91,7 +91,7 @@ int main(void)
 {
 	LOG_INF("MIDI Reactive Harmonic Sample Started");
 
-	midi_dev = DEVICE_DT_GET_ANY(midi1_serial);
+	midi_dev = DEVICE_DT_GET(DT_NODELABEL(midi1));
 	if (!device_is_ready(midi_dev)) {
 		LOG_ERR("MIDI device not ready");
 		return -ENODEV;
@@ -100,10 +100,9 @@ int main(void)
 	/* Register callbacks */
 	midi1_serial_register_callbacks(midi_dev, (struct midi1_serial_callbacks *)&midi_cbs);
 
-	LOG_INF("Listening for MIDI events...");
-
 	while (1) {
-		k_sleep(K_FOREVER);
+		midi1_serial_receiveparser(midi_dev);
+		k_yield();
 	}
 
 	return 0;
