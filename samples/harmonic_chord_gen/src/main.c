@@ -27,7 +27,8 @@ void generate_chord(uint8_t root_note, harm_mask_t chord_mask)
 	uint8_t root_val = root_note % NOTES_PER_OCTAVE;
 	uint8_t octave = root_note / NOTES_PER_OCTAVE;
 
-	LOG_INF("Generating chord for root %s (%d):", 
+	LOG_INF("Generating %s for root %s (%d):", 
+	        harm_recognize_chord(chord_mask),
 	        harm_get_note_name(root_val, true), root_note);
 
 	for (uint8_t i = 0; i < NOTES_PER_OCTAVE; i++) {
@@ -63,7 +64,43 @@ int main(void)
 
 	/* Example 4: D Dorian (C Major rotated to 2nd degree, Root D3 = 50) */
 	harm_mask_t dorian = harm_rotate_mask(HARM_MASK_MAJOR, 1);
+	LOG_INF("Dorian is mode of Major scale. Major scale has %d distinct modes.",
+	        harm_get_distinct_mode_count(HARM_MASK_MAJOR));
 	generate_chord(50, dorian);
+
+	k_sleep(K_MSEC(500));
+
+	/* Example 5: Whole Tone scale (Symmetric) */
+	uint8_t wt_modes = harm_get_distinct_mode_count(HARM_MASK_WHOLE_TONE);
+	LOG_INF("Whole Tone scale has %d notes and %d distinct modes",
+	        harm_get_mask_note_count(HARM_MASK_WHOLE_TONE), wt_modes);
+	generate_chord(60, HARM_MASK_WHOLE_TONE);
+
+	k_sleep(K_MSEC(500));
+
+	/* Example 6: Octatonic scale (Symmetric) */
+	uint8_t oct_modes = harm_get_distinct_mode_count(HARM_MASK_OCTATONIC_HW);
+	LOG_INF("Octatonic (H-W) scale has %d notes and %d distinct modes",
+	        harm_get_mask_note_count(HARM_MASK_OCTATONIC_HW), oct_modes);
+	generate_chord(60, HARM_MASK_OCTATONIC_HW);
+
+	k_sleep(K_MSEC(500));
+
+	/* Example 7: Ukrainian Dorian Scale */
+	LOG_INF("Ukrainian Dorian scale:");
+	generate_chord(60, HARM_MASK_DORIAN_S4);
+
+	k_sleep(K_MSEC(500));
+
+	/* Example 8: Chord Recognition from arbitrary notes */
+	uint8_t notes[] = { 64, 67, 72 }; /* E, G, C */
+	char chord_name[64];
+	harm_recognize_chord_from_notes(notes, 3, chord_name, sizeof(chord_name));
+	LOG_INF("Notes {64, 67, 72} recognized as: %s", chord_name);
+
+	uint8_t notes2[] = { 57, 60, 64, 67 }; /* A, C, E, G (Am7) */
+	harm_recognize_chord_from_notes(notes2, 4, chord_name, sizeof(chord_name));
+	LOG_INF("Notes {57, 60, 64, 67} recognized as: %s", chord_name);
 
 	LOG_INF("Sample execution complete.");
 	return 0;

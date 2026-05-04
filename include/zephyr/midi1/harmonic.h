@@ -69,28 +69,55 @@ typedef uint16_t harm_mask_t;
  * Format: 0b[B][Bb][A][Ab][G][Gb][F][E][Eb][D][Db][C]
  */
 enum harm_scale_mask {
-	HARM_MASK_MAJOR            = 0b101010110101,
-	HARM_MASK_NATURAL_MINOR    = 0b010110101101,
-	HARM_MASK_HARMONIC_MINOR   = 0b100110101101,
-	HARM_MASK_MELODIC_MINOR    = 0b101010101101,
+	/* Modes of the Major Scale */
+	HARM_MASK_MAJOR            = 0b101010110101, /* Ionian */
 	HARM_MASK_DORIAN           = 0b010110110101,
 	HARM_MASK_PHRYGIAN         = 0b010101101101,
 	HARM_MASK_LYDIAN           = 0b101011110101,
 	HARM_MASK_MIXOLYDIAN       = 0b011010110101,
+	HARM_MASK_NATURAL_MINOR    = 0b010110101101, /* Aeolian */
 	HARM_MASK_LOCRIAN          = 0b010101101011,
+
+	/* Modes of Melodic Minor */
+	HARM_MASK_MELODIC_MINOR    = 0b101010101101,
+	HARM_MASK_DORIAN_B2        = 0b011001101011,
+	HARM_MASK_LYDIAN_AUG       = 0b101101010101,
+	HARM_MASK_LYDIAN_DOM       = 0b011011010101,
+	HARM_MASK_MIXOLYDIAN_B6    = 0b010110110101,
+	HARM_MASK_LOCRIAN_S2       = 0b010101101101,
+	HARM_MASK_ALTERED          = 0b010101010111,
+
+	/* Modes of Harmonic Minor */
+	HARM_MASK_HARMONIC_MINOR   = 0b100110101101,
+	HARM_MASK_LOCRIAN_S6       = 0b011001101101,
+	HARM_MASK_IONIAN_S5        = 0b101100110101,
+	HARM_MASK_DORIAN_S4        = 0b011011001101, /* Ukrainian Dorian */
+	HARM_MASK_UKRAINIAN_DORIAN = 0b011011001101,
+	HARM_MASK_PHRYGIAN_DOM     = 0b010100110011,
+	HARM_MASK_LYDIAN_S2        = 0b101011011001,
+	HARM_MASK_ULTRALOCRIAN     = 0b001101010111,
+
+	/* Symmetrical and Pentatonic Scales */
 	HARM_MASK_PENTATONIC_MAJOR = 0b001010010101,
 	HARM_MASK_PENTATONIC_MINOR = 0b010010101001,
 	HARM_MASK_BLUES            = 0b010011101101,
 	HARM_MASK_OCTATONIC_HW     = 0b011011011011,
 	HARM_MASK_OCTATONIC_WH     = 0b101101101101,
-	HARM_MASK_GYPSY            = 0b100110101101,
-	HARM_MASK_SYMETRICAL       = 0b001011101101,
-	HARM_MASK_ENIGMATIC        = 0b100011110011,
-	HARM_MASK_ARABIAN          = 0b111010110001,
-	HARM_MASK_HUNGARIAN        = 0b100100101101,
 	HARM_MASK_WHOLE_TONE       = 0b010101010101,
 	HARM_MASK_AUGMENTED        = 0b100100100101,
-	HARM_MASK_CHROMATIC        = 0b111111111111
+	HARM_MASK_CHROMATIC        = 0b111111111111,
+
+	/* World Scales */
+	HARM_MASK_DOUBLE_HARMONIC  = 0b100100110011,
+	HARM_MASK_GYPSY            = 0b100110101101,
+	HARM_MASK_HUNGARIAN_MINOR  = 0b100111001101,
+	HARM_MASK_HUNGARIAN_MAJOR  = 0b011011011001,
+	HARM_MASK_ARABIAN          = 0b111010110001,
+	HARM_MASK_PERSIAN          = 0b100101110011,
+	HARM_MASK_ENIGMATIC        = 0b100011110011,
+	HARM_MASK_SYMETRICAL       = 0b001011101101,
+	HARM_MASK_HIRAJOSHI        = 0b100011010001,
+	HARM_MASK_INSEN            = 0b010010100011
 };
 
 /**
@@ -107,6 +134,13 @@ enum harm_chord_mask {
 	HARM_MASK_DIMINISHED_7TH   = 0b001001001001,
 	HARM_MASK_HALF_DIM_7TH     = 0b010001001001,
 	HARM_MASK_MINOR_MAJOR_7TH  = 0b100010001001,
+	HARM_MASK_MAJOR_6TH        = 0b001010010001,
+	HARM_MASK_MINOR_6TH        = 0b001010001001,
+	HARM_MASK_MAJOR_9TH        = 0b100010010101,
+	HARM_MASK_MINOR_9TH        = 0b010010001101,
+	HARM_MASK_DOMINANT_9TH     = 0b010010010101,
+	HARM_MASK_DOMINANT_11TH    = 0b010010110101,
+	HARM_MASK_DOMINANT_13TH    = 0b011010110101,
 	HARM_MASK_SUS2             = 0b000010000101,
 	HARM_MASK_SUS4             = 0b000010100001
 };
@@ -162,5 +196,43 @@ const char *harm_get_note_name(uint8_t note, bool use_sharps);
  * @return Number of set bits
  */
 uint8_t harm_get_mask_note_count(harm_mask_t mask);
+
+/**
+ * @brief Get the number of distinct modes for a scale
+ *
+ * This calculates how many unique rotations of the scale exist before 
+ * it repeats. For example, the Major scale has 7 distinct modes, while 
+ * the Whole Tone scale only has 1.
+ *
+ * @param mask Harmonic mask representing a scale
+ *
+ * @return Number of distinct modes (1 to note_count)
+ */
+uint8_t harm_get_distinct_mode_count(harm_mask_t mask);
+
+/**
+ * @brief Recognize a chord from a harmonic mask
+ *
+ * @param mask Harmonic mask
+ *
+ * @return Name of the recognized chord, or "Unknown"
+ */
+const char *harm_recognize_chord(harm_mask_t mask);
+
+/**
+ * @brief Recognize a chord from a set of MIDI notes
+ *
+ * This function attempts to identify the root note and the chord type
+ * from an arbitrary set of notes. It also detects inversions.
+ *
+ * @param notes Array of MIDI note numbers
+ * @param count Number of notes
+ * @param name_buf Buffer to store the resulting name (e.g., "C Major / G")
+ * @param buf_len Length of the buffer
+ *
+ * @return 0 on success, negative error code otherwise
+ */
+int harm_recognize_chord_from_notes(const uint8_t *notes, uint8_t count, 
+                                    char *name_buf, size_t buf_len);
 
 #endif /* ZEPHYR_MIDI1_HARMONIC_H_ */
