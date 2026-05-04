@@ -11,6 +11,7 @@
 #include <zephyr/midi1/harmonic.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 static const char *note_names_sharps[] = {
 	"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
@@ -36,15 +37,43 @@ static const struct chord_entry common_chords[] = {
 	{ HARM_MASK_DIMINISHED_7TH,   "Diminished 7th" },
 	{ HARM_MASK_HALF_DIM_7TH,     "Half-Diminished 7th" },
 	{ HARM_MASK_MINOR_MAJOR_7TH,  "Minor-Major 7th" },
-	{ HARM_MASK_MAJOR_6TH,        "Major 6th" },
-	{ HARM_MASK_MINOR_6TH,        "Minor 6th" },
+	{ HARM_MASK_MAJOR_6TH,        "Major 6 (add13)" },
+	{ HARM_MASK_MINOR_6TH,        "Minor 6 (add13)" },
+	{ HARM_MASK_MAJOR_ADD9,       "Major add9" },
+	{ HARM_MASK_MINOR_ADD9,       "Minor add9" },
+	{ HARM_MASK_MAJOR_ADD11,      "Major add11" },
+	{ HARM_MASK_MINOR_ADD11,      "Minor add11" },
+	{ HARM_MASK_MAJOR_6_9,        "Major 6/9" },
+	{ HARM_MASK_MINOR_6_9,        "Minor 6/9" },
+	{ HARM_MASK_DOM_7_B9,         "7(b9)" },
+	{ HARM_MASK_DOM_7_S9,         "7(#9)" },
+	{ HARM_MASK_DOM_7_SUS4,       "7sus4" },
 	{ HARM_MASK_MAJOR_9TH,        "Major 9th" },
 	{ HARM_MASK_MINOR_9TH,        "Minor 9th" },
 	{ HARM_MASK_DOMINANT_9TH,     "Dominant 9th" },
 	{ HARM_MASK_DOMINANT_11TH,    "Dominant 11th" },
 	{ HARM_MASK_DOMINANT_13TH,    "Dominant 13th" },
 	{ HARM_MASK_SUS2,             "Sus2" },
-	{ HARM_MASK_SUS4,             "Sus4" }
+	{ HARM_MASK_SUS4,             "Sus4" },
+	{ HARM_MASK_POWER_CHORD,      "Power Chord" }
+};
+
+static const struct chord_entry common_scales[] = {
+	{ HARM_MASK_MAJOR,            "Major" },
+	{ HARM_MASK_NATURAL_MINOR,    "Natural Minor" },
+	{ HARM_MASK_HARMONIC_MINOR,   "Harmonic Minor" },
+	{ HARM_MASK_MELODIC_MINOR,    "Melodic Minor" },
+	{ HARM_MASK_DORIAN,           "Dorian" },
+	{ HARM_MASK_PHRYGIAN,         "Phrygian" },
+	{ HARM_MASK_LYDIAN,           "Lydian" },
+	{ HARM_MASK_MIXOLYDIAN,       "Mixolydian" },
+	{ HARM_MASK_LOCRIAN,          "Locrian" },
+	{ HARM_MASK_BLUES,            "Blues" },
+	{ HARM_MASK_PENTATONIC_MAJOR, "Pentatonic Major" },
+	{ HARM_MASK_PENTATONIC_MINOR, "Pentatonic Minor" },
+	{ HARM_MASK_WHOLE_TONE,       "Whole Tone" },
+	{ HARM_MASK_OCTATONIC_HW,     "Octatonic (H-W)" },
+	{ HARM_MASK_DORIAN_S4,        "Ukrainian Dorian" }
 };
 
 #define NOTES_PER_OCTAVE 12u
@@ -216,4 +245,51 @@ int harm_recognize_chord_from_notes(const uint8_t *notes, uint8_t count,
 
 	snprintf(name_buf, buf_len, "Unknown Chord");
 	return 0;
+}
+
+int harm_recognize_scale(harm_mask_t mask, struct harm_scale_result *results, 
+                         uint8_t max_results)
+{
+	if (mask == 0 || results == NULL || max_results == 0) {
+		return 0;
+	}
+
+	uint8_t input_note_count = harm_get_mask_note_count(mask);
+	uint8_t found_count = 0;
+
+	/* Initialize results */
+	for (uint8_t i = 0; i < max_results; i++) {
+		results[i].score = 0;
+	}
+
+	for (uint8_t s = 0; s < sizeof(common_scales) / sizeof(struct chord_entry); s++) {
+		for (uint8_t r = 0; r < NOTES_PER_OCTAVE; r++) {
+			harm_mask_t scale_mask = harm_transpose_mask(common_scales[s].mask, r);
+			harm_mask_t intersection = mask & scale_mask;
+			uint8_t matched_notes = harm_get_mask_note_count(intersection);
+			uint8_t scale_note_count = harm_get_mask_note_count(scale_mask);
+			
+			/* Dice Coefficient: (2 * matched) / (input_total + scale_total) 
+			 * Scaled to 0-100.
+			 */
+			uint16_t score = (matched_notes * 200) / (input_note_count + scale_note_count);
+			
+			/* Insertion sort into the top-N results */
+			if (score > (uint16_t)results[max_results - 1].score) {
+				uint8_t pos = max_results - 1;
+				while (pos > 0 && score > results[pos - 1].score) {
+					results[pos] = results[pos - 1];
+					pos--;
+				}
+				results[pos].name = common_scales[s].name;
+				results[pos].root = r;
+				results[pos].score = score;
+				if (found_count < max_results) {
+					found_count++;
+				}
+			}
+		}
+	}
+
+	return found_count;
 }

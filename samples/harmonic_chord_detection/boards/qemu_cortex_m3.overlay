@@ -1,0 +1,16 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	midi1: midi1 {
+		status = "okay";
+		compatible = "midi1_serial";
+		uart = <&uart1>;
+	};
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <31250>;
+};

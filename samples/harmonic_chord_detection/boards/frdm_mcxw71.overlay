@@ -1,0 +1,15 @@
+&lpuart1 {
+	status = "okay";
+	current-speed = <31250>;
+};
+
+
+/ {
+	midi1_serial: midi1_serial {
+		compatible = "midi1_serial";
+		uart = <&lpuart1>;
+		status = "okay";
+	};
+};
+
+

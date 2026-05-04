@@ -136,13 +136,23 @@ enum harm_chord_mask {
 	HARM_MASK_MINOR_MAJOR_7TH  = 0b100010001001,
 	HARM_MASK_MAJOR_6TH        = 0b001010010001,
 	HARM_MASK_MINOR_6TH        = 0b001010001001,
+	HARM_MASK_MAJOR_ADD9       = 0b000010010101,
+	HARM_MASK_MINOR_ADD9       = 0b000010001101,
+	HARM_MASK_MAJOR_ADD11      = 0b000010110001,
+	HARM_MASK_MINOR_ADD11      = 0b000010101001,
+	HARM_MASK_MAJOR_6_9        = 0b001010010101,
+	HARM_MASK_MINOR_6_9        = 0b001010001101,
+	HARM_MASK_DOM_7_B9         = 0b010010010011,
+	HARM_MASK_DOM_7_S9         = 0b010010011001,
+	HARM_MASK_DOM_7_SUS4       = 0b010010100001,
 	HARM_MASK_MAJOR_9TH        = 0b100010010101,
 	HARM_MASK_MINOR_9TH        = 0b010010001101,
 	HARM_MASK_DOMINANT_9TH     = 0b010010010101,
 	HARM_MASK_DOMINANT_11TH    = 0b010010110101,
 	HARM_MASK_DOMINANT_13TH    = 0b011010110101,
 	HARM_MASK_SUS2             = 0b000010000101,
-	HARM_MASK_SUS4             = 0b000010100001
+	HARM_MASK_SUS4             = 0b000010100001,
+	HARM_MASK_POWER_CHORD      = 0b000010000001
 };
 
 /**
@@ -234,5 +244,26 @@ const char *harm_recognize_chord(harm_mask_t mask);
  */
 int harm_recognize_chord_from_notes(const uint8_t *notes, uint8_t count, 
                                     char *name_buf, size_t buf_len);
+
+/**
+ * @brief Information about a recognized scale
+ */
+struct harm_scale_result {
+	const char *name;
+	uint8_t root;
+	uint8_t score; /* 0-100 percentage match */
+};
+
+/**
+ * @brief Recognize the most likely scales from a harmonic mask
+ *
+ * @param mask Harmonic mask (representing a set of notes played over time)
+ * @param results Array to store the top results
+ * @param max_results Maximum number of results to return
+ *
+ * @return Number of results found
+ */
+int harm_recognize_scale(harm_mask_t mask, struct harm_scale_result *results, 
+                         uint8_t max_results);
 
 #endif /* ZEPHYR_MIDI1_HARMONIC_H_ */
