@@ -1,12 +1,12 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
- 
+
 /*
  * @author Jan-Willem Smaal <usenet@gispen.org>
  * @file display.c
  * @date 20260504
- */ 
+ */
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
@@ -14,9 +14,8 @@
 #include <string.h>
 #include <lvgl.h>
 
+void update_chord_display(char *buf, uint8_t len);
+void update_scale_display(const char *buf);
 
-
-void update_chord_display(char * buf, uint8_t len);
-
-#endif 
+#endif
 /* EOF */

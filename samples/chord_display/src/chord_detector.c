@@ -25,6 +25,7 @@ static void reset_history_handler(struct k_work *work)
 {
 	history_mask = 0;
 	LOG_INF("Note history reset due to silence.");
+	update_scale_display("");
 }
 
 static void update_chord_detection(void)
@@ -54,7 +55,8 @@ static void update_chord_detection(void)
 	k_work_cancel_delayable(&reset_work);
 
 	char current_chord[64];
-	harm_recognize_chord_from_notes(notes_to_check, count, current_chord, sizeof(current_chord));
+	harm_recognize_chord_from_notes(notes_to_check, count, current_chord,
+					sizeof(current_chord));
 
 	if (strcmp(current_chord, last_chord_name) != 0) {
 		strcpy(last_chord_name, current_chord);
@@ -65,12 +67,19 @@ static void update_chord_detection(void)
 		struct harm_scale_result results[3];
 		int found = harm_recognize_scale(history_mask, results, 3);
 		if (found > 0) {
+			char scale_buf[256] = "Likely Scales:\n";
 			LOG_INF("Likely Scales:");
 			for (int i = 0; i < found; i++) {
-				LOG_INF("  - %s %s (%d%%)", 
-				        harm_get_note_name(results[i].root, true),
-				        results[i].name, results[i].score);
+				char line[64];
+				snprintf(line, sizeof(line), "- %s %s (%d%%)\n",
+					 harm_get_note_name(results[i].root, true), results[i].name,
+					 results[i].score);
+				strcat(scale_buf, line);
+				LOG_INF("  - %s %s (%d%%)",
+					harm_get_note_name(results[i].root, true), results[i].name,
+					results[i].score);
 			}
+			update_scale_display(scale_buf);
 		}
 	}
 }
