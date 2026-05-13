@@ -1,7 +1,6 @@
 /*
  * joystick_hid.h - USB Host HID Class Driver for T.16000M
  *
- * Copyright 2026 NXP
  * @author Jan-Willem Smaal <usenet@gispen.org>
  *
  * SPDX-License-Identifier: Apache-2.0

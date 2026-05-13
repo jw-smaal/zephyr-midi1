@@ -1,7 +1,6 @@
 /*
  * main.c - USB HID Joystick to MIDI Bridge Entry Point
  *
- * Copyright 2026 NXP
  * @author Jan-Willem Smaal <usenet@gispen.org>
  *
  * SPDX-License-Identifier: Apache-2.0

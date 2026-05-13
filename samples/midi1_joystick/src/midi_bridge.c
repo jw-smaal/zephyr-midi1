@@ -17,6 +17,9 @@ LOG_MODULE_DECLARE(main, LOG_LEVEL_INF);
 static const struct device *midi_dev;
 static uint16_t last_buttons;
 static uint8_t last_fader;
+static uint16_t last_pw;
+static uint8_t last_mod;
+static uint8_t last_cutoff;
 
 int midi_bridge_init(void)
 {
@@ -36,15 +39,47 @@ int midi_bridge_init(void)
 
 static void process_axes(const struct joystick_state *state)
 {
+	uint16_t current_pw = state->x;
+	uint8_t current_mod = 0;
+	uint8_t current_cutoff = state->twist >> 1;
+
+	/* 
+	 * MOD WHEEL: Only forward Y axis push (Stick Forward)
+	 * T.16000M "Forward" values are < 8192 (Neutral is 8192).
+	 */
+	if (state->y < 8192) {
+		/* Scale [8191 center down to 0 full push] to [1 up to 127] */
+		uint16_t delta = 8192 - state->y;
+		current_mod = (uint8_t)(delta >> 6);
+		if (current_mod > 127) {
+			current_mod = 127;
+		}
+	} else {
+		/* Neutral or pulled back */
+		current_mod = 0;
+	}
+
 	if (device_is_ready(midi_dev)) {
-		/* Map 14-bit X to 14-bit Pitchwheel */
-		midi1_serial_pitchwheel(midi_dev, 0, state->x);
+		/* 1. Pitchwheel (Left/Right) */
+		if (current_pw != last_pw) {
+			midi1_serial_pitchwheel(midi_dev, 0, current_pw);
+			printk("STICK X:%-5u | MIDI -> PitchWheel:%-5u\n", state->x, current_pw);
+			last_pw = current_pw;
+		}
 
-		/* Map 14-bit Y to 7-bit Mod Wheel (CC 1) */
-		midi1_serial_control_change(midi_dev, 0, 1, state->y >> 7);
+		/* 2. Modulation Wheel (Forward Only) */
+		if (current_mod != last_mod) {
+			midi1_serial_control_change(midi_dev, 0, 1, current_mod);
+			printk("STICK Y:%-5u | MIDI -> ModWheel:%-3u\n", state->y, current_mod);
+			last_mod = current_mod;
+		}
 
-		printk("STICK X:%-5u Y:%-5u | MIDI -> PW:%-5u MOD:%-3u\n",
-		       state->x, state->y, state->x, state->y >> 7);
+		/* 3. Filter Cutoff (Twist/Yaw) -> CC 74 */
+		if (current_cutoff != last_cutoff) {
+			midi1_serial_control_change(midi_dev, 0, 74, current_cutoff);
+			printk("STICK T:%-3u   | MIDI -> FilterCutoff:%-3u\n", state->twist, current_cutoff);
+			last_cutoff = current_cutoff;
+		}
 	}
 }
 
@@ -52,10 +87,11 @@ static void process_fader(const struct joystick_state *state)
 {
 	if (state->fader != last_fader) {
 		if (device_is_ready(midi_dev)) {
-			/* Map 8-bit fader to 7-bit Volume (CC 7) */
-			midi1_serial_control_change(midi_dev, 0, 7, state->fader >> 1);
+			/* Invert fader: Forward (0) = 127, Back (255) = 0 */
+			uint8_t current_vol = 127 - (state->fader >> 1);
+			midi1_serial_control_change(midi_dev, 0, 7, current_vol);
 			printk("STICK FADER:%-3u    | MIDI -> VOL:%-3u\n",
-			       state->fader, state->fader >> 1);
+			       state->fader, current_vol);
 		}
 		last_fader = state->fader;
 	}
@@ -63,7 +99,6 @@ static void process_fader(const struct joystick_state *state)
 
 static void process_buttons(const struct joystick_state *state)
 {
-	/* Check Fire Button (Bit 0) */
 	if ((state->buttons & BIT(0)) != (last_buttons & BIT(0))) {
 		if (device_is_ready(midi_dev)) {
 			if (state->buttons & BIT(0)) {
