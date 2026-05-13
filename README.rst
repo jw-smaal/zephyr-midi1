@@ -202,4 +202,4 @@ License
 
 Distributed under the Apache License, Version 2.0. See the source files for details.
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jw-smaal/zephyr-midi1) 
+[![Ask DeepWiki](https://deepwiki.com/jw-smaal/zephyr-midi1) 
