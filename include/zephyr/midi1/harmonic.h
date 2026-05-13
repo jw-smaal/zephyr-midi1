@@ -119,7 +119,34 @@ enum harm_scale_mask {
 	HARM_MASK_HIRAJOSHI = 0b100011010001,
 	HARM_MASK_INSEN = 0b010010100011,
 
-	/* Persichetti Synthetic Scales */
+	/* Michael Hewitt: Musical Scales of the World - World Traditions */
+	/* Japanese */
+	HARM_MASK_RYO = 0b001010010101,    /* 0-2-4-7-9 (Major Pentatonic) */
+	HARM_MASK_RITSU = 0b001010100101,  /* 0-2-5-7-9 (Suspended Pentatonic) */
+	HARM_MASK_MINYO = 0b010010101001,  /* 0-3-5-7-10 (Minor Pentatonic) */
+	HARM_MASK_SAKURA = 0b000110100011, /* 0-1-5-7-8 */
+	HARM_MASK_IWATO = 0b010001100011,  /* 0-1-5-6-10 */
+
+	/* Greek Dromoi & Balkan */
+	HARM_MASK_HIJAZ = 0b010110010011,        /* 0-1-4-5-7-8-10 (Phrygian Dom) */
+	HARM_MASK_SABA = 0b010101010011,         /* 0-1-4-5-6-8-10 */
+	HARM_MASK_HOUZAM = 0b110110011001,       /* 0-3-4-7-8-10-11 */
+	HARM_MASK_NIKRIZ = 0b011011001101,       /* 0-2-3-6-7-9-10 (Dorian #4) */
+	HARM_MASK_KIOURDI = 0b010110110101,      /* 0-2-3-5-7-9-10 (Dorian) */
+	HARM_MASK_PEIRAIOTIKOS = 0b101011110101, /* 0-2-4-5-6-7-9-11 (Lydian) */
+
+	/* Indonesian & SE Asian (12-TET Approximations) */
+	HARM_MASK_PELOG = 0b000110001011,   /* 0-1-3-7-8 */
+	HARM_MASK_SLENDRO = 0b001010100101, /* 0-2-5-7-9 (Same as Ritsu) */
+
+	/* Ethiopian (Kinit) */
+	HARM_MASK_BARO = 0b000110001101, /* 0-2-3-7-8 */
+
+	/* Jazz & Bebop */
+	HARM_MASK_BEBOP_DOMINANT = 0b111010110101, /* 0-2-4-5-7-9-10-11 */
+	HARM_MASK_BEBOP_MAJOR = 0b101110110101,    /* 0-2-4-5-7-8-9-11 */
+
+	/* Persichetti & Synthetic Scales */
 	HARM_MASK_PROMETHEUS = 0b011001010101,
 	HARM_MASK_NEAPOLITAN_MAJOR = 0b101010101011,
 	HARM_MASK_NEAPOLITAN_MINOR = 0b100110101011

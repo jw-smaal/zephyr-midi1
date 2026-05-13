@@ -94,6 +94,26 @@ static const struct chord_entry common_scales[] = {
 	{HARM_MASK_WHOLE_TONE, "Whole Tone"},
 	{HARM_MASK_OCTATONIC_HW, "Octatonic (H-W)"},
 	{HARM_MASK_DORIAN_S4, "Ukrainian Dorian"},
+
+	/* World Scales */
+	{HARM_MASK_RYO, "Japanese Ryo"},
+	{HARM_MASK_RITSU, "Japanese Ritsu"},
+	{HARM_MASK_MINYO, "Japanese Minyo"},
+	{HARM_MASK_SAKURA, "Japanese Sakura"},
+	{HARM_MASK_IWATO, "Japanese Iwato"},
+	{HARM_MASK_HIJAZ, "Greek Hijaz"},
+	{HARM_MASK_SABA, "Greek Saba"},
+	{HARM_MASK_HOUZAM, "Greek Houzam"},
+	{HARM_MASK_NIKRIZ, "Greek Nikriz"},
+	{HARM_MASK_KIOURDI, "Greek Kiourdi"},
+	{HARM_MASK_PEIRAIOTIKOS, "Greek Peiraiotikos"},
+	{HARM_MASK_PELOG, "Indonesian Pelog"},
+	{HARM_MASK_SLENDRO, "Indonesian Slendro"},
+	{HARM_MASK_BARO, "Ethiopian Baro"},
+	{HARM_MASK_BEBOP_DOMINANT, "Bebop Dominant"},
+	{HARM_MASK_BEBOP_MAJOR, "Bebop Major"},
+
+	/* Synthetic Chords/Scales */
 	{HARM_MASK_PROMETHEUS, "Prometheus"},
 	{HARM_MASK_NEAPOLITAN_MAJOR, "Neapolitan Major"},
 	{HARM_MASK_NEAPOLITAN_MINOR, "Neapolitan Minor"}};
