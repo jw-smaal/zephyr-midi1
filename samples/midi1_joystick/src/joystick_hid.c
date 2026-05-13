@@ -29,6 +29,51 @@ struct hid_host_data {
 
 struct hid_host_data joystick_hid_data;
 
+/**
+ * @brief Checks if the received USB transfer contains a valid joystick report
+ */
+static bool is_valid_joystick_report(struct uhc_transfer *const xfer, 
+				     struct hid_host_data *data)
+{
+	if (xfer->ep != data->ep_in) {
+		return false;
+	}
+
+	if (xfer->buf == NULL) {
+		return false;
+	}
+
+	if (xfer->buf->len < 9) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * @brief Parse the raw 9-byte T.16000M report into a joystick state
+ */
+static void handle_joystick_report(struct uhc_transfer *const xfer)
+{
+	struct joystick_state state;
+
+	/* T.16000M mapping:
+	 * Byte 0-1: Buttons
+	 * Byte 3-4: X (14-bit LE)
+	 * Byte 5-6: Y (14-bit LE)
+	 * Byte 7:   Twist (8-bit)
+	 * Byte 8:   Fader (8-bit)
+	 */
+	state.buttons = sys_get_le16(&xfer->buf->data[0]);
+	state.x = sys_get_le16(&xfer->buf->data[3]) & 0x3FFF;
+	state.y = sys_get_le16(&xfer->buf->data[5]) & 0x3FFF;
+	state.twist = xfer->buf->data[7];
+	state.fader = xfer->buf->data[8];
+
+	/* Pass high-level state to the MIDI bridge */
+	midi_bridge_process(&state);
+}
+
 static int hid_host_udev_cb(struct usb_device *const udev,
 			    struct uhc_transfer *const xfer)
 {
@@ -36,31 +81,13 @@ static int hid_host_udev_cb(struct usb_device *const udev,
 	const struct device *uhc_dev = uhs_ctx_ptr->dev;
 	struct hid_host_data *data = &joystick_hid_data;
 
-	if (xfer->err == 0) {
-		if (xfer->ep == data->ep_in) {
-			if (xfer->buf != NULL && xfer->buf->len >= 9) {
-				struct joystick_state state;
-
-				/* T.16000M mapping:
-				 * Byte 0-1: Buttons
-				 * Byte 3-4: X (14-bit LE)
-				 * Byte 5-6: Y (14-bit LE)
-				 * Byte 7:   Twist (8-bit)
-				 * Byte 8:   Fader (8-bit)
-				 */
-				state.buttons = sys_get_le16(&xfer->buf->data[0]);
-				state.x = sys_get_le16(&xfer->buf->data[3]) & 0x3FFF;
-				state.y = sys_get_le16(&xfer->buf->data[5]) & 0x3FFF;
-				state.twist = xfer->buf->data[7];
-				state.fader = xfer->buf->data[8];
-
-				/* Call bridge to process high-level logic */
-				midi_bridge_process(&state);
-			}
-		}
-	} else {
+	if (xfer->err != 0) {
 		LOG_ERR("USB Transfer failed: %d", xfer->err);
 		k_sleep(K_MSEC(10));
+	} else if (is_valid_joystick_report(xfer, data)) {
+		handle_joystick_report(xfer);
+	} else {
+		/* Discard unknown or incomplete packet */
 	}
 
 	/* Always resubmit to keep polling */
@@ -83,13 +110,12 @@ static int hid_host_probe(struct usbh_class_data *const c_data,
 	struct usbh_context *uhs_ctx = udev->ctx;
 	const struct device *uhc_dev = uhs_ctx->dev;
 
-	/* Skip device-level probe, we only care about interfaces */
 	if (iface == 0xFF) {
 		return -ENOTSUP;
 	}
 
 	LOG_INF("Probing Joystick VID=0x%04x PID=0x%04x (Interface %u)",
-	        udev->dev_desc.idVendor, udev->dev_desc.idProduct, iface);
+		udev->dev_desc.idVendor, udev->dev_desc.idProduct, iface);
 
 	data->udev = udev;
 	data->ep_in = 0;
