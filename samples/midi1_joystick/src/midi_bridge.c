@@ -60,19 +60,20 @@ static void process_axes(const struct joystick_state *state)
 	}
 
 	if (device_is_ready(midi_dev)) {
-		/* 1. Pitchwheel (Left/Right) */
+		/* 1. Send Pitchwheel if changed */
 		if (current_pw != last_pw) {
 			midi1_serial_pitchwheel(midi_dev, 0, current_pw);
 			printk("STICK X:%-5u | MIDI -> PitchWheel:%-5u\n", state->x, current_pw);
 			last_pw = current_pw;
 		}
 
-		/* 2. Modulation Wheel (Forward Only) */
+		/* 2. Send Modulation Wheel if changed */
 		if (current_mod != last_mod) {
 			midi1_serial_control_change(midi_dev, 0, 1, current_mod);
 			printk("STICK Y:%-5u | MIDI -> ModWheel:%-3u\n", state->y, current_mod);
 			last_mod = current_mod;
 		}
+
 
 		/* 3. Filter Cutoff (Twist/Yaw) -> CC 74 */
 		if (current_cutoff != last_cutoff) {
