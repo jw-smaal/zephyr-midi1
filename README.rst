@@ -9,6 +9,11 @@ A standalone Zephyr RTOS module providing MIDI 1.0 drivers and protocol helpers.
 :Copyright: Jan-Willem Smaal <usenet@gispen.org>
 :License: Apache-2.0
 
+I have written by hand the MIDI serial, clock and measurement drivers for Zephyr RTOS.    
+Many of the samples of the drivers have been written with code assisted by Gemini-Cli. All
+generated code has been reviewed by me for corectness and adjusted for readabillity. 
+README.rst are mostly machine generated based on the prompt engineering inputs.  
+
 Features
 ********
 
@@ -29,7 +34,7 @@ Integration via West
 Scenario 1: Standalone Workspace (Quick Start)
 ==============================================
 
-To set up a fresh Zephyr workspace (v4.4.0-rc2) including this MIDI1.0 module, follow these steps:
+To set up a fresh Zephyr workspace including this MIDI1.0 module, follow these steps:
 
 1. **Create and initialize the workspace:**
 
