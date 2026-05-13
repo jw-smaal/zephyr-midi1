@@ -7,7 +7,7 @@ Overview
 ********
 
 This sample application demonstrates how to use the Zephyr USB Host stack to
-interface with a USB HID Joystick and translate its axis and button inputs
+interface with a **Thrustmaster T.16000M** and translate its axis and button inputs
 into MIDI 1.0 messages.
 
 The sample is specifically tuned for the **Thrustmaster T.16000M**, leveraging
