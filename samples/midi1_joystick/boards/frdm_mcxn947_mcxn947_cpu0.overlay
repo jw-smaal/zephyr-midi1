@@ -1,0 +1,35 @@
+/*
+ * Copyright 2026 NXP
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&flexcomm2_lpuart2 {
+	current-speed = <31250>;
+	status = "okay";
+};
+
+/ {
+	chosen {
+		zephyr,uhc0 = &usb1;
+	};
+
+	midi0: midi0 {
+		compatible = "midi1_serial";
+		uart = <&flexcomm2_lpuart2>;
+		status = "okay";
+	};
+};
+
+&usb1 {
+	compatible = "nxp,uhc-ehci";
+	status = "okay";
+	phy-handle = <&usbphy1>;
+	/delete-property/ num-bidir-endpoints;
+};
+
+&usbphy1 {
+	status = "okay";
+	tx-d-cal = <4>;
+	tx-cal-45-dp-ohms = <7>;
+	tx-cal-45-dm-ohms = <7>;
+};
