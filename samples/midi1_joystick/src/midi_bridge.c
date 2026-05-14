@@ -98,17 +98,32 @@ static void process_fader(const struct joystick_state *state)
 	}
 }
 
+static void handle_button_note(uint8_t button_idx, bool pressed)
+{
+	/* Map 12 buttons to chromatic octave starting at C4 (Note 60) */
+	uint8_t note = 60 + button_idx;
+
+	if (device_is_ready(midi_dev)) {
+		if (pressed) {
+			midi1_serial_note_on(midi_dev, 0, note, 100);
+			printk("BUTTON %u:DOWN    | MIDI -> NOTE %u ON\n", button_idx, note);
+		} else {
+			midi1_serial_note_off(midi_dev, 0, note, 100);
+			printk("BUTTON %u:UP      | MIDI -> NOTE %u OFF\n", button_idx, note);
+		}
+	}
+}
+
 static void process_buttons(const struct joystick_state *state)
 {
-	if ((state->buttons & BIT(0)) != (last_buttons & BIT(0))) {
-		if (device_is_ready(midi_dev)) {
-			if (state->buttons & BIT(0)) {
-				midi1_serial_note_on(midi_dev, 0, 60, 100);
-				printk("STICK FIRE:DOWN    | MIDI -> NOTE 60 ON\n");
-			} else {
-				midi1_serial_note_off(midi_dev, 0, 60, 100);
-				printk("STICK FIRE:UP      | MIDI -> NOTE 60 OFF\n");
-			}
+	/* Process 12 buttons (Bit 0 to 11) */
+	for (uint8_t i = 0; i < 12; i++) {
+		uint16_t mask = BIT(i);
+		bool current_pressed = (state->buttons & mask) != 0;
+		bool last_pressed = (last_buttons & mask) != 0;
+
+		if (current_pressed != last_pressed) {
+			handle_button_note(i, current_pressed);
 		}
 	}
 	last_buttons = state->buttons;
