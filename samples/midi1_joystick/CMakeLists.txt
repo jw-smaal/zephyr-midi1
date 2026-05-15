@@ -11,4 +11,6 @@ target_sources(app PRIVATE
     src/joystick_hid.c
 )
 
+target_sources_ifdef(CONFIG_SOC_FAMILY_MCXN app PRIVATE src/usb_host_init.c)
+
 target_include_directories(app PRIVATE src)

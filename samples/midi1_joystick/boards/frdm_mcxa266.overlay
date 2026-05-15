@@ -10,14 +10,10 @@
 
 &ctimer0 {
 	status = "okay";
-	/* 180 MHz / (6 + 1) = 25.7 MHz */
-	prescale = <6>;
 };
 
 &ctimer1 {
 	status = "okay";
-	/* 180 MHz / (6 + 1) = 25.7 MHz */
-	prescale = <6>;
 };
 
 /* 
@@ -48,6 +44,15 @@
 	aliases {
 		counterch0 = &ctimer0;
 		counterch1 = &ctimer1;
+	};
+
+	vbus_en: regulator-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "vbus_en";
+		/* Trying P3_24 as the VBUS enable pin */
+		enable-gpios = <&gpio3 24 GPIO_ACTIVE_HIGH>;
+		regulator-boot-on;
+		regulator-always-on;
 	};
 
 	midi0: midi0 {

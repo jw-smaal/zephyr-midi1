@@ -1,0 +1,70 @@
+/*
+ * Device tree overlay for FRDM-MCXN947
+ * @author Jan-Willem Smaal <usenet@gispen.org>
+ */
+
+/ {
+	chosen {
+		zephyr,uhc0 = &usb1;
+	};
+
+	aliases {
+		counterch0 = &ctimer0;
+		counterch1 = &ctimer1;
+	};
+
+	/* VBUS power enable for USB Host mode (J11 connector) */
+	vbus_reg: regulator-fixed {
+		compatible = "regulator-fixed";
+		regulator-name = "vbus_reg";
+		/* UM12018 Page 26: P4_16 is USB1_OTG_PWR */
+		enable-gpios = <&gpio4 16 GPIO_ACTIVE_HIGH>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	midi0: midi0 {
+		status = "okay";
+		compatible = "midi1_serial";
+		uart = <&flexcomm2_lpuart2>;
+	};
+
+	midi1_clock_cntr: midi1_clock_cntr {
+		status = "okay";
+		compatible = "midi1_clock_cntr";
+		counter = <&ctimer0>;
+		midi1_serial = <&midi0>;
+	};
+
+	midi1_clock_meas_cntr: midi1_clock_meas_cntr {
+		status = "okay";
+		compatible = "midi1_clock_meas_cntr";
+		counter = <&ctimer1>;
+	};
+};
+
+/* High-Speed USB Host */
+&usb1 {
+	status = "okay";
+	compatible = "nxp,uhc-ehci";
+	phy-handle = <&usbphy1>;
+	/delete-property/ num-bidir-endpoints;
+};
+
+&usbphy1 {
+	status = "okay";
+};
+
+/* MIDI on Arduino D0/D1 */
+&flexcomm2_lpuart2 {
+	status = "okay";
+	current-speed = <31250>;
+};
+
+&ctimer0 {
+	status = "okay";
+};
+
+&ctimer1 {
+	status = "okay";
+};
