@@ -49,11 +49,10 @@
 	vbus_en: regulator-vbus {
 		compatible = "regulator-fixed";
 		regulator-name = "vbus_en";
-		/* P3_22 (PT3_22) is the PTN5150 PORT select pin. 
-		 * Setting it HIGH selects DFP (Host) mode, which 
-		 * triggers the NX5P switch via the ID line.
+		/* P3_24 (PT3_24) is the direct override pin for NX5P_EN via R92.
+		 * Trying direct control to bypass PTN5150 logic.
 		 */
-		enable-gpios = <&gpio3 22 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&gpio3 24 GPIO_ACTIVE_HIGH>;
 		regulator-boot-on;
 		regulator-always-on;
 	};
