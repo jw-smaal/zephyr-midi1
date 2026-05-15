@@ -22,6 +22,7 @@ LOG_MODULE_DECLARE(main, LOG_LEVEL_INF);
 /* HID Host private data */
 struct hid_host_data {
 	struct usb_device *udev;
+	const struct device *uhc_dev;
 	uint8_t ep_in;
 	uint16_t mps_in;
 	struct uhc_transfer *xfer_in;
@@ -83,7 +84,6 @@ static int hid_host_udev_cb(struct usb_device *const udev,
 
 	if (xfer->err != 0) {
 		LOG_ERR("USB Transfer failed: %d", xfer->err);
-		k_sleep(K_MSEC(10));
 	} else if (is_valid_joystick_report(xfer, data)) {
 		handle_joystick_report(xfer);
 	} else {
@@ -118,6 +118,7 @@ static int hid_host_probe(struct usbh_class_data *const c_data,
 		udev->dev_desc.idVendor, udev->dev_desc.idProduct, iface);
 
 	data->udev = udev;
+	data->uhc_dev = uhc_dev;
 	data->ep_in = 0;
 
 	/* Find Interrupt IN endpoint */
@@ -148,6 +149,7 @@ static int hid_host_probe(struct usbh_class_data *const c_data,
 	if (uhc_ep_enqueue(uhc_dev, data->xfer_in) != 0) {
 		LOG_ERR("Failed to submit initial USB transfer");
 		uhc_xfer_free(uhc_dev, data->xfer_in);
+		data->xfer_in = NULL;
 		return -EIO;
 	}
 
@@ -158,6 +160,12 @@ static int hid_host_removed(struct usbh_class_data *const c_data)
 {
 	struct hid_host_data *data = c_data->priv;
 	LOG_INF("Joystick disconnected");
+
+	if (data->xfer_in != NULL) {
+		uhc_xfer_free(data->uhc_dev, data->xfer_in);
+		data->xfer_in = NULL;
+	}
+
 	data->udev = NULL;
 	return 0;
 }
