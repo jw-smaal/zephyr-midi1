@@ -8,6 +8,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
+#include <zephyr/drivers/midi/midi1.h>
 #include <zephyr/drivers/midi/midi1_serial.h>
 #include <zephyr/logging/log.h>
 #include "midi_bridge.h"
@@ -15,6 +16,8 @@
 LOG_MODULE_DECLARE(main, LOG_LEVEL_INF);
 
 static const struct device *midi_dev;
+static const struct midi1_serial_api *mid;
+
 static uint16_t last_buttons;
 static uint8_t last_fader;
 static uint16_t last_pw;
@@ -33,6 +36,8 @@ int midi_bridge_init(void)
 		LOG_ERR("MIDI device not ready");
 		ret = -ENODEV;
 	}
+	/* Assign api pointer */
+	mid = midi_dev->api;
 
 	return ret;
 }
@@ -60,24 +65,32 @@ static void process_axes(const struct joystick_state *state)
 	}
 
 	if (device_is_ready(midi_dev)) {
-		/* 1. Send Pitchwheel if changed */
+		/* Send Pitchwheel if changed */
 		if (current_pw != last_pw) {
-			midi1_serial_pitchwheel(midi_dev, 0, current_pw);
+			mid->pitchwheel(midi_dev, 
+					CH1, 
+					current_pw);
 			printk("STICK X:%-5u | MIDI -> PitchWheel:%-5u\n", state->x, current_pw);
 			last_pw = current_pw;
 		}
 
-		/* 2. Send Modulation Wheel if changed */
+		/* Send Modulation Wheel if changed */
 		if (current_mod != last_mod) {
-			midi1_serial_control_change(midi_dev, 0, 1, current_mod);
+			mid->control_change(midi_dev, 
+					    CH1, 
+					    CTL_MSB_MODWHEEL, 
+					    current_mod);
 			printk("STICK Y:%-5u | MIDI -> ModWheel:%-3u\n", state->y, current_mod);
 			last_mod = current_mod;
 		}
 
 
-		/* 3. Filter Cutoff (Twist/Yaw) -> CC 74 */
+		/* Filter Cutoff (Twist/Yaw) -> CC 74 */
 		if (current_cutoff != last_cutoff) {
-			midi1_serial_control_change(midi_dev, 0, 74, current_cutoff);
+			mid->control_change(midi_dev, 
+				            CH1, 
+					    CTL_SC5_BRIGHTNESS, 
+					    current_cutoff);
 			printk("STICK T:%-3u   | MIDI -> FilterCutoff:%-3u\n", state->twist, current_cutoff);
 			last_cutoff = current_cutoff;
 		}
@@ -90,7 +103,10 @@ static void process_fader(const struct joystick_state *state)
 		if (device_is_ready(midi_dev)) {
 			/* Invert fader: Forward (0) = 127, Back (255) = 0 */
 			uint8_t current_vol = 127 - (state->fader >> 1);
-			midi1_serial_control_change(midi_dev, 0, 7, current_vol);
+			mid->control_change(midi_dev, 
+					    CH1, 
+					    CTL_MSB_MAIN_VOLUME, 
+					    current_vol);
 			printk("STICK FADER:%-3u    | MIDI -> VOL:%-3u\n",
 			       state->fader, current_vol);
 		}
@@ -105,10 +121,10 @@ static void handle_button_note(uint8_t button_idx, bool pressed)
 
 	if (device_is_ready(midi_dev)) {
 		if (pressed) {
-			midi1_serial_note_on(midi_dev, 0, note, 100);
+			midi1_serial_note_on(midi_dev, CH1, note, 100);
 			printk("BUTTON %u:DOWN    | MIDI -> NOTE %u ON\n", button_idx, note);
 		} else {
-			midi1_serial_note_off(midi_dev, 0, note, 100);
+			midi1_serial_note_off(midi_dev, CH1, note, 100);
 			printk("BUTTON %u:UP      | MIDI -> NOTE %u OFF\n", button_idx, note);
 		}
 	}
@@ -135,3 +151,5 @@ void midi_bridge_process(const struct joystick_state *state)
 	process_fader(state);
 	process_buttons(state);
 }
+
+/* EOF */ 
