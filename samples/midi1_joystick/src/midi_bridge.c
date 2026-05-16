@@ -68,7 +68,7 @@ static void process_axes(const struct joystick_state *state)
 		/* Send Pitchwheel if changed */
 		if (current_pw != last_pw) {
 			mid->pitchwheel(midi_dev, 
-					CH1, 
+					CONFIG_MIDI1_SERIAL_CHANNEL -1, 
 					current_pw);
 			printk("STICK X:%-5u | MIDI -> PitchWheel:%-5u\n", state->x, current_pw);
 			last_pw = current_pw;
@@ -77,7 +77,7 @@ static void process_axes(const struct joystick_state *state)
 		/* Send Modulation Wheel if changed */
 		if (current_mod != last_mod) {
 			mid->control_change(midi_dev, 
-					    CH1, 
+					    CONFIG_MIDI1_SERIAL_CHANNEL -1, 
 					    CTL_MSB_MODWHEEL, 
 					    current_mod);
 			printk("STICK Y:%-5u | MIDI -> ModWheel:%-3u\n", state->y, current_mod);
@@ -88,7 +88,7 @@ static void process_axes(const struct joystick_state *state)
 		/* Filter Cutoff (Twist/Yaw) -> CC 74 */
 		if (current_cutoff != last_cutoff) {
 			mid->control_change(midi_dev, 
-				            CH1, 
+				            CONFIG_MIDI1_SERIAL_CHANNEL -1, 
 					    CTL_SC5_BRIGHTNESS, 
 					    current_cutoff);
 			printk("STICK T:%-3u   | MIDI -> FilterCutoff:%-3u\n", state->twist, current_cutoff);
@@ -104,7 +104,7 @@ static void process_fader(const struct joystick_state *state)
 			/* Invert fader: Forward (0) = 127, Back (255) = 0 */
 			uint8_t current_vol = 127 - (state->fader >> 1);
 			mid->control_change(midi_dev, 
-					    CH1, 
+					    CONFIG_MIDI1_SERIAL_CHANNEL -1, 
 					    CTL_MSB_MAIN_VOLUME, 
 					    current_vol);
 			printk("STICK FADER:%-3u    | MIDI -> VOL:%-3u\n",
@@ -121,10 +121,16 @@ static void handle_button_note(uint8_t button_idx, bool pressed)
 
 	if (device_is_ready(midi_dev)) {
 		if (pressed) {
-			midi1_serial_note_on(midi_dev, CH1, note, 100);
+			mid->note_on(midi_dev, 
+				     CONFIG_MIDI1_SERIAL_CHANNEL -1, 
+				     note, 
+				     100);
 			printk("BUTTON %u:DOWN    | MIDI -> NOTE %u ON\n", button_idx, note);
 		} else {
-			midi1_serial_note_off(midi_dev, CH1, note, 100);
+			mid->note_off(midi_dev, 
+				      CONFIG_MIDI1_SERIAL_CHANNEL -1, 
+				      note, 
+				      100);
 			printk("BUTTON %u:UP      | MIDI -> NOTE %u OFF\n", button_idx, note);
 		}
 	}
