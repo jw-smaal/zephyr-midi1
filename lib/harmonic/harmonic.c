@@ -25,10 +25,10 @@ struct chord_entry {
 };
 
 static const struct chord_entry common_chords[] = {
-	{HARM_MASK_MAJOR_TRIAD, "Major Triad"},
-	{HARM_MASK_MINOR_TRIAD, "Minor Triad"},
-	{HARM_MASK_DIMINISHED_TRIAD, "Diminished Triad"},
-	{HARM_MASK_AUGMENTED_TRIAD, "Augmented Triad"},
+	{HARM_MASK_MAJOR_TRIAD, "Major"},
+	{HARM_MASK_MINOR_TRIAD, "Minor"},
+	{HARM_MASK_DIMINISHED_TRIAD, "Diminished"},
+	{HARM_MASK_AUGMENTED_TRIAD, "Augmented"},
 	{HARM_MASK_MAJOR_7TH, "Major 7th"},
 	{HARM_MASK_MINOR_7TH, "Minor 7th"},
 	{HARM_MASK_DOMINANT_7TH, "Dominant 7th"},
