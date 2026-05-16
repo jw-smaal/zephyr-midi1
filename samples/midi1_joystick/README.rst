@@ -28,10 +28,21 @@ The application maps joystick inputs to MIDI messages as follows:
 Requirements
 ************
 
-*   A board with USB Host support (e.g., FRDM-RW612).
+*   A board with USB Host support (see Board Support Status below).
 *   A USB HID Joystick (Thrustmaster T.16000M).
 *   A passive USB-C to USB-A adapter (if using a USB-C board port).
 *   MIDI gear connected to the designated UART (e.g., MikroBUS TX).
+
+Board Support Status
+********************
+
++-----------------+-------------+-----------------------------------------------------------+
+| Board           | Status      | Notes                                                     |
++=================+=============+===========================================================+
+| FRDM-RW612      | **Working** | Full support.                                             |
++-----------------+-------------+-----------------------------------------------------------+
+| FRDM-MCXN947    | **Working** | Requires manual SOSC/PHY init (included in project).      |
++-----------------+-------------+-----------------------------------------------------------+
 
 Building and Running
 ********************
