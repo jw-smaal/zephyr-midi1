@@ -15,13 +15,23 @@
 #include <zephyr/midi1/note.h>
 
 /*
+ * Return the note with the octave included (Thread-safe).
+ */
+void harm_note_to_text_w_oct(uint8_t midinote, bool flats, char *buf, size_t len)
+{
+	if (buf == NULL || len == 0) {
+		return;
+	}
+	snprintf(buf, len, "%s%d", harm_note_to_text(midinote, flats), harm_note_to_oct(midinote));
+}
+
+/*
  * Return the note with the octave included.
  */
 const char *harm_note_to_text_with_octave(uint8_t midinote, bool flats)
 {
 	static char notestring[8];
-	snprintf(notestring, sizeof(notestring), "%s%d", harm_note_to_text(midinote, flats),
-		 harm_note_to_oct(midinote));
+	harm_note_to_text_w_oct(midinote, flats, notestring, sizeof(notestring));
 	return &notestring[0];
 }
 

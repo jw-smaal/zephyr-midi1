@@ -571,23 +571,25 @@ void midi1_serial_reset(const struct device *dev)
 void midi1_sysex_start(const struct device *dev)
 {
 	struct midi1_serial_data *data = dev->data;
+	/*
+	 * Lock the channel for the entire SysEx transaction to prevent
+	 * interleaving of channel/common messages. Real-time messages
+	 * bypass this mutex via tx_rt_ringbuf and will still interleave
+	 * as per the MIDI 1.0 specification.
+	 */
 	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	midi1_serial_tx_enqueue(dev, SYSTEM_EXCLUSIVE_START);
 	data->running_status_tx = 0;
-	k_mutex_unlock(&data->tx_lock);
 }
 
 void midi1_sysex_char(const struct device *dev, uint8_t c)
 {
-	struct midi1_serial_data *data = dev->data;
-
 	/*
-	 * Sysex data should be 0 -> 127U so ignore everyhing else
+	 * Sysex data should be 0 -> 127U so ignore everyhing else.
+	 * Mutex is already held by midi1_sysex_start().
 	 */
 	if (!(c & CHANNEL_VOICE_MASK)) {
-		k_mutex_lock(&data->tx_lock, K_FOREVER);
 		midi1_serial_tx_enqueue(dev, c);
-		k_mutex_unlock(&data->tx_lock);
 	}
 }
 
@@ -601,7 +603,6 @@ void midi1_sysex_data_bulk(const struct device *dev, const uint8_t *data, uint32
 void midi1_sysex_stop(const struct device *dev)
 {
 	struct midi1_serial_data *data = dev->data;
-	k_mutex_lock(&data->tx_lock, K_FOREVER);
 	midi1_serial_tx_enqueue(dev, SYSTEM_EXCLUSIVE_END);
 	data->running_status_tx = 0;
 	k_mutex_unlock(&data->tx_lock);
@@ -712,7 +713,7 @@ static void midi1_serial_ump_sysex_flush(const struct device *dev, uint8_t statu
 	if (data->sysex_ump_count > 0 || status == UMP_SYSEX7_STATUS_END ||
 	    status == UMP_SYSEX7_STATUS_COMPLETE) {
 		data->cb.ump_cb(dev, midi1_sysex7(UMP_CHANNEL_GROUP, status, data->sysex_ump_count,
-						 data->sysex_ump_buf));
+						  data->sysex_ump_buf));
 		data->sysex_ump_count = 0;
 		data->sysex_ump_started = true;
 	}
@@ -736,8 +737,9 @@ void midi1_serial_receiveparser_ump(const struct device *dev)
 		} else {
 			if (data->in_sysex) {
 				/* Status byte interrupted SysEx */
-				uint8_t status = data->sysex_ump_started ? UMP_SYSEX7_STATUS_END
-									 : UMP_SYSEX7_STATUS_COMPLETE;
+				uint8_t status = data->sysex_ump_started
+							 ? UMP_SYSEX7_STATUS_END
+							 : UMP_SYSEX7_STATUS_COMPLETE;
 				midi1_serial_ump_sysex_flush(dev, status);
 			}
 			data->in_sysex = false;
@@ -747,18 +749,19 @@ void midi1_serial_receiveparser_ump(const struct device *dev)
 			} else {
 				data->running_status_rx = 0;
 				if (c == SYSTEM_TUNE_REQUEST) {
-					data->cb.ump_cb(
-						dev, UMP_SYS_RT_COMMON(UMP_CHANNEL_GROUP,
-								       SYSTEM_TUNE_REQUEST, 0, 0));
+					data->cb.ump_cb(dev, UMP_SYS_RT_COMMON(UMP_CHANNEL_GROUP,
+									       SYSTEM_TUNE_REQUEST,
+									       0, 0));
 				} else if (c == SYSTEM_EXCLUSIVE_START) {
 					data->in_sysex = true;
 					data->sysex_ump_count = 0;
 					data->sysex_ump_started = false;
 				} else if (c == SYSTEM_EXCLUSIVE_END) {
 					if (data->in_sysex) {
-						uint8_t status = data->sysex_ump_started
-									 ? UMP_SYSEX7_STATUS_END
-									 : UMP_SYSEX7_STATUS_COMPLETE;
+						uint8_t status =
+							data->sysex_ump_started
+								? UMP_SYSEX7_STATUS_END
+								: UMP_SYSEX7_STATUS_COMPLETE;
 						midi1_serial_ump_sysex_flush(dev, status);
 					}
 				} else if (c == SYSTEM_MTC_QUARTER_FRAME ||
@@ -785,9 +788,9 @@ void midi1_serial_receiveparser_ump(const struct device *dev)
 		data->midi_c3 = c;
 
 		if (data->running_status_rx == SYSTEM_SONG_POSITION) {
-			data->cb.ump_cb(
-				dev, UMP_SYS_RT_COMMON(UMP_CHANNEL_GROUP, SYSTEM_SONG_POSITION,
-						       data->midi_c2, data->midi_c3));
+			data->cb.ump_cb(dev,
+					UMP_SYS_RT_COMMON(UMP_CHANNEL_GROUP, SYSTEM_SONG_POSITION,
+							  data->midi_c2, data->midi_c3));
 			data->running_status_rx = 0;
 			return;
 		}
@@ -808,11 +811,11 @@ void midi1_serial_receiveparser_ump(const struct device *dev)
 			data->cb.ump_cb(
 				dev, midi1_pitchwheel(chan, (data->midi_c3 << 7) | data->midi_c2));
 		} else if (status == C_POLYPHONIC_AFTERTOUCH) {
-			data->cb.ump_cb(
-				dev, midi1_polyaftertouch(chan, data->midi_c2, data->midi_c3));
+			data->cb.ump_cb(dev,
+					midi1_polyaftertouch(chan, data->midi_c2, data->midi_c3));
 		} else if (status == C_CONTROL_CHANGE) {
-			data->cb.ump_cb(
-				dev, midi1_controlchange(chan, data->midi_c2, data->midi_c3));
+			data->cb.ump_cb(dev,
+					midi1_controlchange(chan, data->midi_c2, data->midi_c3));
 		}
 	} else {
 		if (data->running_status_rx == 0) {
@@ -823,8 +826,8 @@ void midi1_serial_receiveparser_ump(const struct device *dev)
 							       SYSTEM_MTC_QUARTER_FRAME, c, 0));
 			data->running_status_rx = 0;
 		} else if (data->running_status_rx == SYSTEM_SONG_SELECT) {
-			data->cb.ump_cb(
-				dev, UMP_SYS_RT_COMMON(UMP_CHANNEL_GROUP, SYSTEM_SONG_SELECT, c, 0));
+			data->cb.ump_cb(dev, UMP_SYS_RT_COMMON(UMP_CHANNEL_GROUP,
+							       SYSTEM_SONG_SELECT, c, 0));
 			data->running_status_rx = 0;
 		} else if (data->running_status_rx < 0xC0 ||
 			   (data->running_status_rx >= 0xE0 && data->running_status_rx < 0xF0) ||
@@ -937,8 +940,7 @@ static const struct midi1_serial_api midi1_serial_driver_api = {
 	.sysex_start = midi1_sysex_start,
 	.sysex_char = midi1_sysex_char,
 	.sysex_data_bulk = midi1_sysex_data_bulk,
-	.sysex_stop = midi1_sysex_stop
-};
+	.sysex_stop = midi1_sysex_stop};
 
 #define DT_DRV_COMPAT midi1_serial
 #define MIDI1_SERIAL_DEFINE(inst)                                                                  \

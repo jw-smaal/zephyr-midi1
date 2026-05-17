@@ -38,6 +38,15 @@
 const char *harm_note_to_text(uint8_t midinote, bool flats);
 
 /**
+ * @brief convert note to text with octave (Thread-safe)
+ * @param midinote in MIDI format (limited to 0 -> 127)
+ * @param flats represent not in flats or sharps
+ * @param buf pointer to output buffer
+ * @param len length of buffer
+ */
+void harm_note_to_text_w_oct(uint8_t midinote, bool flats, char *buf, size_t len);
+
+/**
  * @brief convert note to text with octave
  * @param midinote in MIDI format (limited to 0 -> 127)
  * @return char note in text format e.g. Db3
