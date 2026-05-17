@@ -166,8 +166,13 @@ void midi1_clock_meas_cntr_pulse(const struct device *dev)
 	if (midi1_blockavg_count(&data->midi1_blockavg) == MIDI1_BLOCKAVG_SIZE) {
 		uint32_t avg_ticks = midi1_blockavg_average(&data->midi1_blockavg);
 		uint32_t interval_us = counter_ticks_to_us(cfg->counter_dev, avg_ticks);
-		data->scaled_bpm = MIDI1_SCALED_BPM_NUMERATOR / interval_us;
-		data->valid = true;
+
+		if (interval_us > 0) {
+			data->scaled_bpm = MIDI1_SCALED_BPM_NUMERATOR / interval_us;
+			data->valid = true;
+		} else {
+			data->valid = false;
+		}
 	}
 }
 
