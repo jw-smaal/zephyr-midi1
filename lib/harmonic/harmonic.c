@@ -389,6 +389,8 @@ int harm_recognize_scale(harm_mask_t mask, struct harm_scale_result *results, ui
 
 	/* Initialize results */
 	for (uint8_t i = 0; i < max_results; i++) {
+		results[i].name = NULL;
+		results[i].root = 0;
 		results[i].score = 0;
 	}
 

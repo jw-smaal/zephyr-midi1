@@ -116,9 +116,7 @@ static void midi1_serial_isr_callback(const struct device *dev, void *user_data)
 	const struct midi1_serial_config *cfg = midi1_serial->config;
 	struct midi1_serial_data *data = midi1_serial->data;
 
-	if (!uart_irq_update(cfg->uart)) {
-		return;
-	}
+	uart_irq_update(cfg->uart);
 
 	/* Handle TX: Hardware is ready for more data */
 	if (uart_irq_tx_ready(cfg->uart)) {
